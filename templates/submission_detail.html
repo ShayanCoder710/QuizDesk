@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}جزئیات پاسخ‌ها{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('quiz_results', token=quiz.token) }}">بازگشت به نتایج</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom:50px;">
+    <div class="card review-head">
+        <h1 class="page-title">👤 {{ sub.first_name }} {{ sub.last_name }}</h1>
+        <p class="page-sub">شماره کلاس: {{ sub.class_no }} — زمان ثبت: {{ sub.submitted_at|jdate }}</p>
+        
+        {% set max_score = quiz.questions | map(attribute='score') | sum %}
+        
+        <div class="info-chips">
+            <span class="badge badge-score">نمره: {{ sub.score|fa }} از {{ max_score|fa }}</span>
+            <span class="mini-chip g">✓ درست: {{ sub.answers|selectattr('is_correct')|list|length|fa }}</span>
+            <span class="mini-chip r">✗ غلط: {{ wrong|fa }}</span>
+            <span class="mini-chip b">— بی‌پاسخ: {{ blank|fa }}</span>
+            {% if sub.warnings %}
+                <span class="badge badge-warn">⚠ {{ sub.warnings|fa }} اخطار خروج از تب</span>
+            {% else %}
+                <span class="badge badge-ok">بدون اخطار</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if warns %}
+    <div class="card warn-card">
+        <h3>⚠️ زمان‌های خروج از تب ({{ warns|length|fa }} مورد)</h3>
+        <ul class="warn-list">
+            {% for w in warns %}
+            <li>ساعت {{ w.created_at|jtime }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% for q in questions %}
+        {% set ans = answers.get(q.id) %}
+        {% set sel = ans.selected if ans else 0 %}
+        
+        <div class="card q-card">
+            <div class="q-title-header">
+                <span class="q-badge">سوال {{ orig_index.get(q.id, loop.index)|fa }}</span>
+                
+                {% set show_note = (loop.index != orig_index.get(q.id, loop.index)) %}
+                {% if show_note %}
+                    <span class="q-badge shuffle-note">نمایش دانش‌آموز: {{ loop.index|fa }}</span>
+                {% endif %}
+                <span class="q-score-badge">⭐ {{ q.score|fa }} نمره</span>
+            </div>
+
+            <div class="q-text-content">
+                {{ q.text }}
+                {% if sel == 0 %}
+                    <span class="mini-chip b" style="margin-right: 8px;">بدون پاسخ</span>
+                {% endif %}
+            </div>
+            
+            {% if q.image_path %}
+            <div class="question-image-wrapper">
+                <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+            </div>
+            {% endif %}
+            
+            <div class="options">
+                {% for opt in [q.option1, q.option2, q.option3, q.option4] %}
+                    {% set is_correct = (loop.index == q.correct) %}
+                    {% set is_chosen = (loop.index == sel) %}
+                    {% set cls = 'correct' if is_correct else ('wrong' if is_chosen else '') %}
+                    
+                    <div class="opt-static {{ cls }}">
+                        <span class="opt-letter">{{ loop.index|fa }}</span>
+                        <span class="opt-text">{{ opt }}</span>
+                        
+                        {% if is_chosen and is_correct %}
+                            <span class="opt-mark">✔ انتخاب دانش‌آموز — درست</span>
+                        {% elif is_chosen %}
+                            <span class="opt-mark">✘ انتخاب دانش‌آموز — غلط</span>
+                        {% elif is_correct %}
+                            <span class="opt-mark">✔ پاسخ صحیح</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card card">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk" style="width: 33%">
+            <h1 class="brand-name qd-text">Quiz<span>Desk</span></h1>
+            <p class="brand-sub">پنل معلم — ساخت و برگزاری آزمون چهارگزینه‌ای</p>
+        </div>
+
+        <form method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="field">
+                <label>نام کاربری</label>
+                <input type="text" name="username" class="input" style="font-family: 'JB', 'IRANYekan';" placeholder="نام کاربری خود را وارد کنید" value="{{ request.form.get('username', '') }}" required>
+            </div>
+            
+            <div class="field">
+                <label>رمز عبور</label>
+                <input type="password" name="password" class="input" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg btn-block">ورود به پنل</button>
+        </form>
+
+        <p class="auth-alt">حساب کاربری ندارید؟ <a href="{{ url_for('register') }}">ثبت‌نام کنید</a></p>
+    </div>
+</div>
+{% endblock %}

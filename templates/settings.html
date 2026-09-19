@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}تنظیمات حساب{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('panel') }}">بازگشت به پنل</a>
+        </div>
+    </div>
+</header>
+
+<a href="https://ble.ir/ShayanCoder710" target="_blank" class="support-card">
+    <div class="support-icon">🛠️</div>
+    <div class="support-content">
+        <span class="support-title">پشتیبانی و گزارش باگ</span>
+        <span class="support-desc">در صورت مشاهده هرگونه مشکل از طریق بله به ما پیام دهید</span>
+    </div>
+    <div class="support-arrow">←</div>
+</a>
+
+<div class="shell" style="padding-bottom:50px;">
+    
+    <div class="settings-card">
+        <div class="settings-header">
+            <span class="settings-icon">👤</span>
+            <div>
+                <h3 class="settings-title">اطلاعات حساب</h3>
+                <p class="settings-subtitle">مشخصات حساب کاربری شما</p>
+            </div>
+        </div>
+        <div class="info-row">
+            <span class="info-label">نام و نام خانوادگی:</span>
+            <span class="info-value">{{ teacher.name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">نام کاربری:</span>
+            <span class="info-value info-username">{{ teacher.username }}</span>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <div class="settings-header">
+            <span class="settings-icon">🔒</span>
+            <div>
+                <h3 class="settings-title">تغییر رمز عبور</h3>
+                <p class="settings-subtitle">در صورتی که رمز شما ساده است یا لو رفته است آن را عوض کنید</p>
+            </div>
+        </div>
+        
+        <form method="post" action="{{ url_for('teacher_settings') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="field">
+                <label>رمز عبور فعلی</label>
+                <input type="password" name="current_password" class="input" placeholder="رمز عبور فعلی را وارد کنید" required>
+            </div>
+            
+            <div class="field">
+                <label>رمز عبور جدید</label>
+                <input type="password" name="new_password" class="input" placeholder="حداقل ۶ حرف" required>
+            </div>
+            
+            <div class="field">
+                <label>تکرار رمز عبور جدید</label>
+                <input type="password" name="confirm_password" class="input" placeholder="رمز عبور جدید را دوباره بنویسید" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">تغییر رمز عبور</button>
+        </form>
+    </div>
+
+    <div class="settings-card danger-zone">
+        <div class="settings-header">
+            <span class="settings-icon">⚠️</span>
+            <div>
+                <h3 class="settings-title" style="color: var(--err);">حذف دائمی حساب</h3>
+                <p class="settings-subtitle">این عمل غیرقابل بازگشت است</p>
+            </div>
+        </div>
+        
+        <p style="color: var(--muted); line-height: 1.8; margin-bottom: 16px;">
+            با حذف حساب، <b style="color: var(--err);">تمام اطلاعات شما برای همیشه پاک خواهد شد</b> و قابل بازگشت نیست.
+        </p>
+
+        <form method="post" action="{{ url_for('delete_account') }}" id="delete-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="field">
+                <label>رمز عبور خود را برای تایید وارد کنید</label>
+                <input type="password" name="password" class="input" placeholder="••••••••" required>
+            </div>
+            
+            <div class="field">
+                <label>برای تایید، دقیقاً عبارت <b style="color: var(--err);">«حذف حساب»</b> را بنویسید</label>
+                <input type="text" name="confirm_text" class="input" placeholder="حذف حساب" required>
+            </div>
+            
+            <button type="button" class="btn btn-danger btn-block" id="delete-btn">
+                🗑️ حذف دائمی حساب کاربری
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('delete-btn').addEventListener('click', function () {
+    var password = document.querySelector('input[name="password"]').value;
+    var confirmText = document.querySelector('input[name="confirm_text"]').value;
+    
+    if (!password) {
+        alert('لطفاً رمز عبور خود را وارد کنید.');
+        return;
+    }
+    if (confirmText.trim() !== 'حذف حساب') {
+        alert('برای تایید باید دقیقاً عبارت «حذف حساب» را بنویسید.');
+        return;
+    }
+    
+    if (confirm('⚠️ آیا واقعاً مطمئن هستید؟\n\nاین عمل غیرقابل بازگشت است و تمام اطلاعات شما برای همیشه پاک خواهد شد.')) {
+        document.getElementById('delete-form').submit();
+    }
+});
+</script>
+{% endblock %}

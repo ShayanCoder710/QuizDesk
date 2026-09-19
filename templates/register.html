@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card card">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk_Logo" style="width: 33%;">
+            <h1 class="brand-name qd-text">Quiz<span>Desk</span></h1>
+            <p class="brand-sub">ساخت حساب معلم</p>
+        </div>
+
+        <form method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="field">
+                <label>نام و نام خانوادگی</label>
+                <input type="text" name="name" class="input" placeholder="مثال: شایان سیدی" value="{{ request.form.get('name', '') }}" required>
+            </div>
+            
+            <div class="field">
+                <label>نام کاربری</label>
+                <input type="text" name="username" style="font-family: 'JB', 'IRANYekan';" class="input" placeholder="یک نام کاربری یکتا انتخاب کنید" value="{{ request.form.get('username', '') }}" required>
+            </div>
+            
+            <div class="field">
+                <label>رمز عبور</label>
+                <input type="password" name="password" class="input" placeholder="حداقل ۶ حرف" required>
+            </div>
+            
+            <div class="field">
+                <label>تکرار رمز عبور</label>
+                <input type="password" name="confirm" class="input" placeholder="رمز عبور را دوباره وارد کنید" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg btn-block">ساخت حساب</button>
+        </form>
+
+        <p class="auth-alt">قبلاً ثبت‌نام کرده‌اید؟ <a href="{{ url_for('login') }}">وارد شوید</a></p>
+    </div>
+</div>
+{% endblock %}

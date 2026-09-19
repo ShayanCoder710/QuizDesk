@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}نتایج آزمون{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('panel') }}">بازگشت به پنل</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom:50px;">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">📊 نتایج آزمون «{{ quiz.title }}»</h1>
+            <p class="page-sub" style="font-size: 15px;">
+                حداکثر نمره آزمون: <b>{{ max_score|fa }}</b>
+                میانگین نمره: <b>{{ avg|fa }}</b> از {{ max_score|fa }} 
+                — بهترین نمره: <b style="color: var(--ok);">{{ best|fa }}</b>
+            </p>
+        </div>
+    </div>
+
+    {% if subs %}
+
+        <div style="margin-bottom: 16px;">
+            <a class="btn btn-primary btn-block" href="{{ url_for('quiz_results_pdf', token=quiz.token) }}" style="text-align: center;">
+                دانلود نتایج به صورت فایل PDF
+            </a>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>نام دانش‌آموز</th>
+                        <th>شماره کلاس</th>
+                        <th>نمره</th>
+                        <th>اخطار خروج از تب</th>
+                        <th>زمان ثبت</th>
+                        <th style="width: 100px;">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in subs %}
+                        <tr>
+                            <td>{{ loop.index|fa }}</td>
+                            <td style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</td>
+                            <td>{{ s.class_no }}</td>
+                            <td><span class="badge badge-score">{{ s.score|fa }} از {{ max_score|fa }}</span></td>
+                            <td>
+                                {% if s.warnings %}
+                                    <span class="badge badge-warn">⚠ {{ s.warnings|fa }} اخطار</span>
+                                {% else %}
+                                    <span class="badge badge-ok">بدون اخطار</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 13px;">{{ s.submitted_at|jdate }}</td>
+                            <td>
+                                <a class="btn btn-ghost btn-sm" href="{{ url_for('submission_detail', sid=s.id) }}">جزئیات</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        <div class="empty">
+            <span class="big">📭</span>
+            <p>هنوز کسی در این آزمون شرکت نکرده است.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

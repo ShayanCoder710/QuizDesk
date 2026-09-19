@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block body_class %}exam-page{% endblock %}
+{% block content %}
+<div class="shell exam-shell">
+
+    <div class="exam-top card">
+        <div>
+            <div class="exam-title">📝 {{ quiz.title }}</div>
+            <div class="exam-sub">
+                {{ sub.first_name }} {{ sub.last_name }} · کلاس {{ sub.class_no }}
+                · <span class="warn-chip">⚠ اخطارها: <span id="warn-count">{{ sub.warnings|fa }}</span></span>
+            </div>
+        </div>
+        <div class="timer-box" id="timer-box">
+            <span class="timer-label">زمان باقی‌مانده</span>
+            <span class="timer" id="timer">--:--</span>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-text">
+            <span>پیشرفت آزمون</span>
+            <span><b id="progress-count">۰</b> از <b>{{ questions|length|fa }}</b> سوال پاسخ داده شده</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div class="exam-hint">
+        🔒 امکان کپی کردن متن وجود ندارد   <b>|</b>   با هر خروج از این تب برای شما اخطار ثبت میشود و معلم هم میتواند آن را ببنید   <b>|</b>  با اتمام زمان، پاسخ‌ها خودکار ثبت می‌شوند 
+    </div>
+
+    <form id="exam-form" method="post" action="{{ url_for('take_submit', token=quiz.token) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {% for q in questions %}
+        <div class="card q-card">
+            <div class="q-title">
+                <span class="q-badge">سوال {{ orig_index.get(q.id, loop.index)|fa }}</span>
+                {{ q.text }}
+            </div>
+
+            {% if q.image_path %}
+            <div style="margin: 12px 0; text-align: center;">
+                <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال"
+                    style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 1px solid var(--border);">
+            </div>
+            {% endif %}
+
+            <div class="options">
+                {% for opt in [q.option1, q.option2, q.option3, q.option4] %}
+                <label class="opt">
+                    <input type="radio" name="answer_{{ q.id }}" value="{{ loop.index }}">
+                    <span class="opt-body">
+                        <span class="opt-letter">{{ loop.index|fa }}</span>
+                        <span>{{ opt }}</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block"
+            onclick="return confirm('آیا از ثبت نهایی پاسخ‌ها مطمئن هستید؟ بعد از ثبت امکان تغییر نیست.');">
+            ✅ ثبت نهایی پاسخ‌ها
+        </button>
+    </form>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var form = document.getElementById('exam-form');
+    var timerEl = document.getElementById('timer');
+    var timerBox = document.getElementById('timer-box');
+    var warnEl = document.getElementById('warn-count');
+    if (!form || !timerEl) return;
+
+    var CSRF_TOKEN = document.querySelector('input[name="csrf_token"]')?.value || '';
+    var WARN_URL = '{{ url_for("take_warn", token=quiz.token) }}';
+    var initialRemaining = {{ remaining | int }};
+    var startPerf = performance.now();
+    var submitted = false;
+    var finished = false;
+
+    var FA = '۰۱۲۳۴۵۶۷۸۹';
+    function toFa(s) { return String(s).replace(/\d/g, function (d) { return FA[+d]; }); }
+    function pad(x) { return (x < 10 ? '0' : '') + x; }
+
+    function render(sec) {
+        timerEl.textContent = toFa(pad(Math.floor(sec / 60)) + ':' + pad(sec % 60));
+        timerBox.classList.toggle('danger', sec <= 60);
+    }
+
+    function sendWarn() {
+        fetch(WARN_URL, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN } })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d && d.warnings !== undefined && warnEl) warnEl.textContent = toFa(d.warnings); })
+            .catch(function () { });
+    }
+
+    function finish() {
+        if (finished) return;
+        finished = true;
+        submitted = true;
+        clearInterval(tick);
+        form.submit();
+    }
+
+    form.addEventListener('submit', function () { submitted = true; finished = true; });
+
+    var tick = setInterval(function () {
+        var elapsed = Math.floor((performance.now() - startPerf) / 1000);
+        var rem = Math.max(0, initialRemaining - elapsed);
+        render(rem);
+        if (rem <= 0) finish();
+    }, 250);
+    render(Math.max(0, initialRemaining));
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden && !submitted) sendWarn();
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+        if (!submitted) {
+            var body = new URLSearchParams();
+            body.append('csrf_token', CSRF_TOKEN);
+            if (navigator.sendBeacon) navigator.sendBeacon(WARN_URL, body);
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    ['contextmenu', 'copy', 'cut', 'dragstart'].forEach(function (ev) {
+        document.addEventListener(ev, function (e) { e.preventDefault(); });
+    });
+    document.addEventListener('keydown', function (e) {
+        var k = (e.key || '').toLowerCase();
+        if (e.key === 'F12') e.preventDefault();
+        if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'p', 's', 'u', 'a'].indexOf(k) > -1) e.preventDefault();
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].indexOf(k) > -1) e.preventDefault();
+    });
+
+    var total = {{ questions|length }};
+    var fill = document.getElementById('progress-fill');
+    var countSpan = document.getElementById('progress-count');
+    var radios = document.querySelectorAll('.opt input[type="radio"]');
+
+    function updateProgress() {
+        var answered = 0;
+        var grouped = {};
+
+        radios.forEach(function(r) {
+            if (r.checked) {
+                grouped[r.name] = true;
+            }
+        });
+
+        answered = Object.keys(grouped).length;
+        var percent = (answered / total) * 100;
+
+        fill.style.width = percent + '%';
+        countSpan.textContent = toFa(answered);
+    }
+
+    radios.forEach(function(r) {
+        r.addEventListener('change', updateProgress);
+    });
+
+    updateProgress();
+})();
+</script>
+{% endblock %}

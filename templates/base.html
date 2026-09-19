@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    
+    <title>QuizDesk | {% block title %}ساخت آزمون آنلاین{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}ساخت آزمون آنلاین چهارگزینه‌ای با QuizDesk{% endblock %}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    <div class="bg-glow"></div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-area shell">
+        {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <button type="button" class="theme-toggle-btn" id="theme-toggle" title="تغییر تم">
+        <span id="theme-icon">🌓</span>
+    </button>
+
+    <script>
+        (function () {
+            var toggleBtn = document.getElementById('theme-toggle');
+            var themeIcon = document.getElementById('theme-icon');
+            var body = document.body;
+
+            var savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-theme');
+                themeIcon.textContent = '🌓';
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                if (body.classList.contains('light-theme')) {
+                    body.classList.remove('light-theme');
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.textContent = '☀️';
+                } else {
+                    body.classList.add('light-theme');
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.textContent = '🌙';
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>

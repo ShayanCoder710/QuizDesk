@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}جزئیات آزمون{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo" href="{{ url_for('panel') }}"><img src="{{ url_for('static', filename='images/logo.png') }}"
+                class="logo-img" alt="QuizDesk">QuizDesk</a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('panel') }}">بازگشت به پنل</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom:50px;">
+    <div class="card form-card">
+        <h2 class="card-title">🎯 {{ quiz.title }}</h2>
+        <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">⏱ {{ quiz.time_limit|fa }} دقیقه</span>
+            <span class="chip">📚 {{ quiz.questions|length|fa }} سوال</span>
+            <span class="chip" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3);">⭐ حداکثر نمره: {{ max_score|fa }}</span>
+            <span class="chip">👥 {{ done_count|fa }} شرکت‌کننده</span>
+            {% if quiz.shuffle_questions %}<span class="chip hot"> ترتیب تصادفی فعال</span>{% endif %}
+            {% if quiz.show_answers %}
+                <span class="chip" style="background: rgba(74, 222, 128, 0.1); color: var(--ok); border-color: rgba(74, 222, 128, 0.3);">✅ نمایش پاسخ فعال</span>
+            {% else %}
+                <span class="chip">🔒 پاسخ‌ها مخفی</span>
+            {% endif %}
+        </div>
+
+        <p style="color:var(--muted); font-size:13px;">
+            این لینک را برای دانش‌آموزان خود بفرستید. آن‌ها بدون نیاز به لاگین وارد آزمون می‌شوند:
+        </p>
+
+        {% set student_link = url_for('take_quiz', token=quiz.token, _external=True) %}
+        <div class="link-box">
+            <input class="link-input" id="quiz-link" style="font-family: 'JB';" readonly value="{{ student_link }}">
+            <button type="button" class="btn btn-primary btn-sm" id="copy-btn">کپی لینک</button>
+        </div>
+
+        <div class="back-row">
+            <a class="btn btn-ghost" href="{{ url_for('quiz_results', token=quiz.token) }}">📊 مشاهده نتایج</a>
+            <form method="post" action="{{ url_for('delete_quiz', token=quiz.token) }}"
+                onsubmit="return confirm('آیا از حذف این آزمون مطمئن هستید؟');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger" type="submit">حذف آزمون</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">سوالات این آزمون</h2>
+        <div class="q-list">
+            {% for q in quiz.questions %}
+            <div class="q-item">
+
+                <div class="q-header">
+                    <span class="q-num-badge">سوال {{ loop.index|fa }}</span>
+                    <span class="q-score-badge">⭐ {{ q.score|fa }} نمره</span>
+                </div>
+
+                <div class="q-text-content">
+                    {{ q.text }}
+                </div>
+
+                {% if q.image_path %}
+                <div class="question-image-wrapper">
+                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+                </div>
+                {% endif %}
+
+                <div class="q-options">
+                    {% set opts = [q.option1, q.option2, q.option3, q.option4] %}
+                    {% for i in range(4) %}
+                        {% set is_correct = (i + 1 == q.correct) %}
+                        <div class="q-option {% if is_correct %}is-correct{% endif %}">
+                            <span class="opt-label">{{ (i + 1)|fa }}</span>
+                            <span class="opt-value">{{ opts[i] }}</span>
+                            {% if is_correct %}
+                            <span class="correct-badge">پاسخ صحیح</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .q-num-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+</style>
+
+<script>
+    document.getElementById('copy-btn').addEventListener('click', function () {
+        var inp = document.getElementById('quiz-link');
+        inp.select();
+        inp.setSelectionRange(0, 99999);
+        try { navigator.clipboard.writeText(inp.value); } catch (e) { }
+        document.execCommand('copy');
+        this.textContent = '✓ کپی شد';
+        var btn = this;
+        setTimeout(function () { btn.textContent = 'کپی لینک'; }, 1800);
+    });
+</script>
+{% endblock %}

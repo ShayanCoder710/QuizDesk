@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}نتیجه آزمون{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card card result-card">
+        <div class="brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk" style="width: 33%">
+            <h1 class="brand-name">Quiz<span>Desk</span></h1>
+        </div>
+
+        <h2>🎉 {{ sub.first_name }} عزیز، آزمون تمام شد!</h2>
+        <p class="page-sub">نتیجه شما در آزمون «{{ quiz.title }}»</p>
+
+        <div class="score-ring">
+            <div class="score-num">{{ sub.score|fa }} <small>از {{ max_score|fa }}</small></div>
+        </div>
+
+        <p class="percent-text">درصد پاسخ‌های درست: <b>{{ percent|fa }}٪</b></p>
+
+        <div class="score-summary">
+            <div class="summary-item">
+                <span class="summary-label">✅ پاسخ‌های درست:</span>
+                <span class="summary-value" style="color: var(--ok);">{{ correct_count|fa }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">❌ پاسخ‌های غلط:</span>
+                <span class="summary-value" style="color: var(--err);">{{ wrong_count|fa }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">— بی‌پاسخ:</span>
+                <span class="summary-value" style="color: var(--muted);">{{ blank_count|fa }}</span>
+            </div>
+        </div>
+
+        {% if quiz.show_answers %}
+        <div style="margin-top: 30px;">
+            <a href="{{ url_for('take_review', token=quiz.token) }}" class="btn btn-primary btn-lg btn-block">
+                📝 مشاهده پاسخ‌های صحیح
+            </a>
+        </div>
+        {% else %}
+        <div style="margin-top: 30px; padding: 20px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; text-align: center;">
+            <p style="color: var(--muted); font-size: 14px; margin: 0;">
+                🔒 پاسخ‌های صحیح توسط معلم مخفی شده‌اند.
+            </p>
+        </div>
+        {% endif %}
+ 
+        <form method="post" action="{{ url_for('take_finish', token=quiz.token) }}" style="margin-top: 20px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-lg btn-block"
+                onclick="return confirm('⚠️ خروج و حذف سشن (اگر بجز شما شخص دیگری قرار است با این دستگاه همین امتحان را پاسخ بدهد OK را بزنید - تقلب نکنید!)');">
+                🚪 خروج و حذف سشن
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

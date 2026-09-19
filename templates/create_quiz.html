@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'ویرایش آزمون' if quiz else 'ساخت آزمون جدید' }}{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('panel') }}">بازگشت به پنل</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom:50px;">
+    <form id="quiz-form" method="post" novalidate enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="question_count" id="question_count" value="0">
+
+        <div class="card form-card">
+            <h2 class="card-title">{{ '✏️ ویرایش آزمون' if quiz else '📝 ساخت آزمون جدید' }}</h2>
+            <div class="grid-2">
+                <div class="field">
+                    <label>نام آزمون</label>
+                    <input class="input" type="text" name="title" placeholder="مثلاً: آزمون ریاضی نوبت اول" required>
+                </div>
+                <div class="field">
+                    <label>زمان پاسخگویی (دقیقه)</label>
+                    <input class="input" type="number" name="time_limit" min="1" max="480" placeholder="مثلاً: 20" required>
+                </div>
+            </div>
+
+            <div class="switch-row">
+                <label class="switch">
+                    <input type="checkbox" name="shuffle">
+                    <span class="track"></span>
+                </label>
+                <div>
+                    <b>نمایش تصادفی سوال‌ها</b><br>
+                    ترتیب سوال‌ها برای هر دانش‌آموز به‌صورت رندوم تغییر می‌کند تا تقلب سخت شود.
+                </div>
+            </div>
+
+            <div class="switch-row" style="margin-bottom: 10px;">
+                <label class="switch">
+                    <input type="checkbox" name="show_answers">
+                    <span class="track"></span>
+                </label>
+                <div>
+                    <b>نمایش پاسخ صحیح بعد از آزمون</b><br>
+                    دانش‌آموزان پس از اتمام آزمون، پاسخ صحیح سوالات را مشاهده می‌کنند.
+                </div>
+            </div>
+        </div>
+
+        <div id="questions"></div>
+
+        <div class="add-row">
+            <button type="button" id="add-q" class="btn btn-ghost">＋ افزودن سوال</button>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">{{ 'ذخیره تغییرات' if quiz else 'ذخیره آزمون و دریافت لینک' }}</button>
+    </form>
+</div>
+
+<style>
+    .q-block {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, margin 0.3s ease-in-out, padding 0.3s ease-in-out, max-height 0.4s ease-in-out;
+        overflow: hidden;
+        opacity: 1;
+        max-height: 2000px;
+    }
+    .q-block.collapsing {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        max-height: 0 !important;
+        border: 1px solid transparent !important;
+    }
+</style>
+
+<script>
+(function () {
+    var wrap = document.getElementById('questions');
+    var countInput = document.getElementById('question_count');
+
+    var toFa = function (n) {
+        return String(n).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
+    };
+
+    window.updateFileName = function(input, labelId) {
+        var label = document.getElementById(labelId);
+        var textSpan = label.querySelector('.upload-text');
+        var index = input.id.split('-')[1];
+        var removeBtn = document.getElementById('remove-img-btn-' + index);
+
+        if (input.files && input.files.length > 0) {
+            textSpan.textContent = '✅ ' + input.files[0].name;
+            label.classList.add('file-selected');
+
+            if (removeBtn) removeBtn.style.display = '';
+        } else {
+            textSpan.textContent = 'برای انتخاب عکس کلیک کنید';
+            label.classList.remove('file-selected');
+
+            var flagInput = document.getElementById('remove_img_flag_' + index);
+            if (flagInput && flagInput.dataset.hasOldImage === '1') {
+                if (removeBtn) removeBtn.style.display = '';
+            } else {
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+        }
+    };
+
+    window.removeQuestionImage = function(index) {
+        var fileInput = document.getElementById('file-' + index);
+        fileInput.value = '';
+
+        var label = document.getElementById('label-' + index);
+        label.querySelector('.upload-text').textContent = 'برای انتخاب عکس کلیک کنید';
+        label.classList.remove('file-selected');
+
+        var removeBtn = document.getElementById('remove-img-btn-' + index);
+        if (removeBtn) removeBtn.style.display = 'none';
+
+        var flagInput = document.getElementById('remove_img_flag_' + index);
+        if (flagInput) flagInput.value = '1';
+    };
+
+    function renumber() {
+        var blocks = wrap.querySelectorAll('.q-block');
+        for (var k = 0; k < blocks.length; k++) {
+            blocks[k].querySelector('.qn').textContent = toFa(k + 1);
+
+            var textarea = blocks[k].querySelector('.q-textarea');
+            if (textarea) textarea.name = 'q' + k + '_text';
+
+            for (var j = 1; j <= 4; j++) {
+                var optInput = blocks[k].querySelector('.opt-input[name$="_opt' + j + '"]');
+                if (optInput) optInput.name = 'q' + k + '_opt' + j;
+
+                var radioInput = blocks[k].querySelector('input[type="radio"][value="' + j + '"]');
+                if (radioInput) radioInput.name = 'q' + k + '_correct';
+            }
+
+            var fileInput = blocks[k].querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.id = 'file-' + k;
+                fileInput.name = 'q' + k + '_image';
+                fileInput.setAttribute('onchange', "updateFileName(this, 'label-" + k + "')");
+            }
+
+            var fileLabel = blocks[k].querySelector('.file-upload-label');
+            if (fileLabel) {
+                fileLabel.id = 'label-' + k;
+                fileLabel.setAttribute('for', 'file-' + k);
+            }
+
+            var removeFlag = blocks[k].querySelector('input[type="hidden"][name$="_remove_image"]');
+            if (removeFlag) {
+                removeFlag.name = 'q' + k + '_remove_image';
+                removeFlag.id = 'remove_img_flag_' + k;
+            }
+
+            var removeBtn = blocks[k].querySelector('button[id^="remove-img-btn-"]');
+            if (removeBtn) {
+                removeBtn.id = 'remove-img-btn-' + k;
+                removeBtn.setAttribute('onclick', "removeQuestionImage(" + k + ")");
+            }
+
+            var scoreInput = blocks[k].querySelector('.score-input');
+            if (scoreInput) scoreInput.name = 'q' + k + '_score';
+        }
+    }
+
+    function addQuestion(prefillData) {
+        renumber();
+        var i = wrap.querySelectorAll('.q-block').length;
+        var div = document.createElement('div');
+        div.className = 'q-block card';
+
+        var optsHtml = '';
+        for (var j = 1; j <= 4; j++) {
+            var optValue = prefillData ? prefillData['option' + j] : '';
+            var isChecked = prefillData && prefillData.correct === j ? ' checked' : '';
+            optsHtml +=
+                '<label class="opt-line">' +
+                    '<input type="radio" name="q' + i + '_correct" value="' + j + '"' + isChecked + '>' +
+                    '<span class="radio-dot"></span>' +
+                    '<input type="text" class="input opt-input" name="q' + i + '_opt' + j + '" placeholder="گزینه ' + toFa(j) + '" value="' + (optValue || '') + '">' +
+                '</label>';
+        }
+
+        var textareaContent = prefillData ? prefillData.text : '';
+        var uploadText = prefillData && prefillData.image_path ? '✅ ' + prefillData.image_path : 'برای انتخاب عکس کلیک کنید';
+        var scoreValue = (prefillData && prefillData.score !== undefined && prefillData.score !== null) ? prefillData.score : 1;
+
+        var hasOldImage = prefillData && prefillData.image_path;
+        var removeBtnStyle = hasOldImage ? '' : 'display: none;';
+        var removeImageBtn = `
+            <button type="button" class="btn btn-danger btn-sm" id="remove-img-btn-${i}" onclick="removeQuestionImage(${i})" style="margin-top: 8px; width: 100%; ${removeBtnStyle}">🗑️ حذف تصویر</button>
+            <input type="hidden" id="remove_img_flag_${i}" name="q${i}_remove_image" value="0" data-has-old-image="${hasOldImage ? '1' : '0'}">
+        `;
+
+        div.innerHTML =
+            '<div class="q-block-head">' +
+                '<span class="q-num">سوال <b class="qn">' + toFa(i + 1) + '</b></span>' +
+                '<button type="button" class="btn btn-danger btn-sm q-remove">حذف سوال</button>' +
+            '</div>' +
+            '<input type="hidden" class="question-id" name="q' + i + '_id" value="' + (prefillData && prefillData.id ? prefillData.id : '') + '">' +
+            '<div class="field">' +
+                '<label>متن سوال</label>' +
+                '<textarea class="input q-textarea" name="q' + i + '_text" placeholder="صورت سوال را بنویسید..." rows="2">' + textareaContent + '</textarea>' +
+            '</div>' +
+            '<div class="field">' +
+                '<label>تصویر سوال (اختیاری)</label>' +
+                '<div class="custom-file-upload">' +
+                    '<input type="file" id="file-' + i + '" name="q' + i + '_image" accept="image/png,image/jpeg,image/webp,image/gif" onchange="updateFileName(this, \'label-' + i + '\')">' +
+                    '<label for="file-' + i + '" class="file-upload-label" id="label-' + i + '">' +
+                        '<span class="upload-icon">📷</span>' +
+                        '<span class="upload-text">' + uploadText + '</span>' +
+                    '</label>' +
+                '</div>' +
+                '<p class="hint">فرمت‌های مجاز: PNG, JPG, WEBP — حداکثر ۵ مگابایت</p>' +
+                removeImageBtn +
+            '</div>' +
+            '<div class="opts">' + optsHtml + '</div>' +
+            '<p class="hint">برای مشخص کردن گزینه صحیح، دایره‌ی کنار هر گزینه را تیک بزنید.</p>' +
+            '<div class="field" style="margin-top: 16px;">' +
+                '<label>⭐ نمره این سوال</label>' +
+                '<input type="number" class="input score-input" name="q' + i + '_score" value="' + scoreValue + '" step="0.25" min="0" max="100" style="max-width: 180px;">' +
+                '<p class="hint">می‌توانید اعداد اعشاری مثل ۰.۵ یا ۱.۵ وارد کنید. پیش‌فرض: ۱</p>' +
+            '</div>';
+
+        wrap.appendChild(div);
+
+        div.querySelector('.q-remove').addEventListener('click', function (e) {
+            var block = e.target.closest('.q-block');
+            if (block) {
+                block.classList.add('collapsing');
+                setTimeout(function() {
+                    block.remove();
+                    renumber();
+                }, 400);
+            }
+        });
+    }
+
+    var prefill = {{ prefill | tojson }};
+
+    document.querySelector('input[name="title"]').value = prefill.title || '';
+    document.querySelector('input[name="time_limit"]').value = prefill.time_limit || '';
+    if (prefill.show_answers) document.querySelector('input[name="show_answers"]').checked = true;
+    if (prefill.shuffle) document.querySelector('input[name="shuffle"]').checked = true;
+
+    {% if questions_data %}
+    var existingQuestions = {{ questions_data | tojson }};
+    existingQuestions.forEach(function(q) {
+        addQuestion(q);
+    });
+    {% else %}
+    addQuestion();
+    {% endif %}
+
+    document.getElementById('add-q').addEventListener('click', function() {
+        addQuestion();
+    });
+
+    document.getElementById('quiz-form').addEventListener('submit', function (e) {
+        var titleInput = document.querySelector('input[name="title"]');
+        var timeInput = document.querySelector('input[name="time_limit"]');
+        var blocks = wrap.querySelectorAll('.q-block');
+
+        if (!titleInput.value.trim()) {
+            e.preventDefault();
+            alert('⚠️ لطفاً نام آزمون را وارد کنید.');
+            titleInput.focus();
+            titleInput.style.borderColor = 'var(--err)';
+            titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        var timeVal = parseInt(timeInput.value);
+        if (!timeInput.value || isNaN(timeVal) || timeVal < 1 || timeVal > 480) {
+            e.preventDefault();
+            alert('⚠️ زمان پاسخگویی باید عددی بین ۱ تا ۴۸۰ دقیقه باشد.');
+            timeInput.focus();
+            timeInput.style.borderColor = 'var(--err)';
+            timeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        if (blocks.length === 0) {
+            e.preventDefault();
+            alert('⚠️ باید حداقل یک سوال به آزمون اضافه کنید.');
+            return;
+        }
+
+        titleInput.style.borderColor = '';
+        timeInput.style.borderColor = '';
+        countInput.value = blocks.length;
+
+        for (var k = 0; k < blocks.length; k++) {
+            var b = blocks[k];
+            var texts = b.querySelectorAll('.q-textarea, .opt-input');
+
+            for (var t = 0; t < texts.length; t++) {
+                if (!texts[t].value.trim()) {
+                    e.preventDefault();
+                    alert('⚠️ لطفاً همه‌ی فیلدهای متنی سوال ' + toFa(k + 1) + ' را پر کنید.');
+                    texts[t].focus();
+                    texts[t].style.borderColor = 'var(--err)';
+                    texts[t].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                } else {
+                    texts[t].style.borderColor = '';
+                }
+            }
+
+            if (!b.querySelector('input[type=radio]:checked')) {
+                e.preventDefault();
+                alert('⚠️ لطفاً گزینه صحیح سوال ' + toFa(k + 1) + ' را مشخص کنید.');
+                b.querySelector('.q-block-head').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            var scoreInput = b.querySelector('.score-input');
+            var scoreVal = parseFloat(scoreInput.value);
+            if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 100) {
+                e.preventDefault();
+                alert('⚠️ نمره سوال ' + toFa(k + 1) + ' باید عددی بین ۰ تا ۱۰۰ باشد.');
+                scoreInput.focus();
+                scoreInput.style.borderColor = 'var(--err)';
+                scoreInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            } else {
+                scoreInput.style.borderColor = '';
+            }
+        }
+    });
+
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('input')) {
+            e.target.style.borderColor = '';
+        }
+    });
+})();
+</script>
+{% endblock %}

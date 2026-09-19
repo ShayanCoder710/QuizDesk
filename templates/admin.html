@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}پنل مدیریت کل{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <span class="hello admin-hello">🛡️ {{ session.get('teacher_name') }}</span>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('panel') }}">بازگشت به پنل</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom: 50px;">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">🛡️ داشبورد مدیریت</h1>
+            <p class="page-sub">نظارت کامل بر کاربران و آزمون‌ها</p>
+        </div>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-num">{{ teachers|length|fa }}</div>
+            <div class="stat-label">کاربران</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">{{ quizzes|length|fa }}</div>
+            <div class="stat-label">آزمون‌ها</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">{{ total_submissions|fa }}</div>
+            <div class="stat-label">شرکت کنندگان</div>
+        </div>
+    </div>
+
+    <div class="card admin-section">
+        <h2 class="card-title">👥 کاربران</h2>
+        <div class="table-wrap">
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th class="hide-mobile">شناسه</th>
+                        <th>نام</th>
+                        <th class="hide-tablet">نام کاربری</th>
+                        <th>آزمون‌ها</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in teachers %}
+                    <tr>
+                        <td class="hide-mobile">{{ t.id|fa }}</td>
+                        <td class="td-name">{{ t.name }}</td>
+                        <td class="hide-tablet td-username">{{ t.username }}</td>
+                        <td class="td-center">{{ t.quizzes|length|fa }}</td>
+                        <td>
+                            {% if t.username != admin_username %}
+                            <form method="post" action="{{ url_for('admin_delete_teacher', teacher_id=t.id) }}" style="display: inline;"
+                                  onsubmit="return confirm('آیا از حذف این کاربر و تمام آزمون‌های او مطمئن هستید؟');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-danger btn-sm" type="submit">حذف</button>
+                            </form>
+                            {% else %}
+                            <span class="chip admin-chip">مدیر</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card admin-section">
+        <h2 class="card-title">📝 آزمون‌ها</h2>
+        <div class="table-wrap">
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th>عنوان</th>
+                        <th class="hide-tablet">سازنده</th>
+                        <th>شرکت‌کنندگان</th>
+                        <th class="hide-mobile">تاریخ</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in quizzes %}
+                    <tr>
+                        <td class="td-name">{{ q.title }}</td>
+                        <td class="hide-tablet td-name">{{ q.teacher.name }}</td>
+                        <td class="td-center">{{ q.submissions|length|fa }}</td>
+                        <td class="hide-mobile td-date">{{ q.created_at|jdate }}</td>
+                        <td>
+                            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin_view_quiz', token=q.token) }}">مشاهده</a>
+                            <form method="post" action="{{ url_for('admin_delete_quiz', token=q.token) }}" style="display: inline;"
+                                  onsubmit="return confirm('آیا از حذف این آزمون مطمئن هستید؟');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-danger btn-sm" type="submit">حذف</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

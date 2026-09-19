@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}جزئیات آزمون (ادمین){% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo" href="{{ url_for('admin_panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin_panel') }}">بازگشت به پنل ادمین</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom:50px;">
+    <div class="card form-card">
+        <h2 class="card-title">🛡️ {{ quiz.title }}</h2>
+        
+        {% set max_score = quiz.questions | map(attribute='score') | sum %}
+        
+        <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">👤 معلم: {{ quiz.teacher.name }}</span>
+            <span class="chip">⏱ {{ quiz.time_limit|fa }} دقیقه</span>
+            <span class="chip">📚 {{ quiz.questions|length|fa }} سوال</span>
+            <span class="chip" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3);">⭐ حداکثر نمره: {{ max_score|fa }}</span>
+            <span class="chip">👥 {{ done_count|fa }} شرکت‌کننده</span>
+            {% if quiz.shuffle_questions %}
+                <span class="chip hot">🔀 ترتیب تصادفی فعال</span>
+            {% endif %}
+            {% if quiz.show_answers %}
+                <span class="chip" style="background: rgba(74, 222, 128, 0.1); color: var(--ok); border-color: rgba(74, 222, 128, 0.3);">✅ نمایش پاسخ فعال</span>
+            {% else %}
+                <span class="chip">🔒 پاسخ‌ها مخفی</span>
+            {% endif %}
+            {% if quiz.is_locked %}
+                <span class="chip" style="background: rgba(248, 113, 113, 0.1); color: var(--err); border-color: rgba(248, 113, 113, 0.3);">🔒 قفل شده توسط معلم</span>
+            {% endif %}
+        </div>
+
+        <p style="color:var(--muted); font-size:13px;">
+            لینک آزمون: 
+            <code style="background: var(--bg-soft); padding: 4px 8px; border-radius: 6px; font-family: 'JB';">{{ url_for('take_quiz', token=quiz.token, _external=True) }}</code>
+        </p>
+
+        <p style="color:var(--muted); font-size:13px; margin-top: 8px;">
+            تاریخ ایجاد: {{ quiz.created_at|jdate }}
+        </p>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">سوالات این آزمون</h2>
+        <div class="q-list">
+            {% for q in quiz.questions %}
+            <div class="q-item">
+    
+                <div class="q-header">
+                    <span class="q-num-badge">سوال {{ loop.index|fa }}</span>
+                    <span class="q-score-badge">⭐ {{ q.score|fa }} نمره</span>
+                </div>
+
+                <div class="q-text-content">
+                    {{ q.text }}
+                </div>
+
+                {% if q.image_path %}
+                <div class="question-image-wrapper">
+                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+                </div>
+                {% endif %}
+
+                <div class="q-options">
+                    {% set opts = [q.option1, q.option2, q.option3, q.option4] %}
+                    {% for i in range(4) %}
+                        {% set is_correct = (i + 1 == q.correct) %}
+                        <div class="q-option {% if is_correct %}is-correct{% endif %}">
+                            <span class="opt-label">{{ (i + 1)|fa }}</span>
+                            <span class="opt-value">{{ opts[i] }}</span>
+                            {% if is_correct %}
+                            <span class="correct-badge">پاسخ صحیح</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .q-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .q-num-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    .q-score-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    .q-text-content {
+        display: block;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg-soft);
+        margin-bottom: 16px;
+        font-weight: 500;
+        line-height: 1.6;
+        color: var(--text);
+    }
+    code {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+</style>
+{% endblock %}

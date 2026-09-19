@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="msg-wrap">
+    <div class="card msg-card">
+        <span class="msg-icon">{{ icon }}</span>
+        <h2 class="msg-title">{{ title }}</h2>
+        <p class="msg-text">{{ text }}</p>
+        <!-- <a class="btn btn-primary" href="{{ back_url }}">{{ back_label }}</a> -->
+    </div>
+</div>
+{% endblock %}

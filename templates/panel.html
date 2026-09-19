@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}پنل{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo" href="{{ url_for('panel') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <span class="hello">{{ session.get('teacher_name', '') }} عزیز، خوش آمدید 👋</span>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('teacher_settings') }}">تنظیمات</a>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('logout') }}">خروج</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">آزمون‌های من</h1>
+            <p class="page-sub">آزمون بسازید، لینک بدهید و نتایج را ببینید.</p>
+        </div>
+        <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">＋ ساخت آزمون جدید</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><div class="stat-num">{{ quizzes|length|fa }}</div><div class="stat-label">آزمون</div></div>
+        <div class="stat-card"><div class="stat-num">{{ total_students|fa }}</div><div class="stat-label">شرکت‌کننده</div></div>
+        <div class="stat-card"><div class="stat-num">{{ total_questions|fa }}</div><div class="stat-label">سوال</div></div>
+    </div>
+
+    {% if quizzes %}
+        <div class="search-box" style="margin-bottom: 20px;">
+            <input type="text" id="quiz-search" class="input" placeholder="🔍 جستجو در آزمون‌ها..." style="width: 100%;">
+        </div>
+
+        <div class="quiz-grid">
+            {% for q in quizzes %}
+                {% set done = q.submissions|selectattr('submitted_at')|list %}
+                {% set is_locked_quiz = done|length > 0 %}
+                <div class="quiz-card {% if q.is_locked %}quiz-locked{% endif %}">
+                    <div class="quiz-title">
+                        📝 {{ q.title }}
+                        {% if q.is_locked %}
+                            <span class="lock-badge">🔒 قفل شده توسط شما</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="chips">
+                        <span class="chip">⏱ {{ q.time_limit|fa }} دقیقه</span>
+                        <span class="chip">📚 {{ q.questions|length|fa }} سوال</span>
+                        <span class="chip">👥 {{ done|length|fa }} شرکت‌کننده</span>
+                        {% if q.shuffle_questions %}
+                            <span class="chip hot">🔀 ترتیب تصادفی</span>
+                        {% endif %}
+                        {% if q.show_answers %}
+                            <span class="chip" style="background: rgba(74, 222, 128, 0.1); color: var(--ok); border-color: rgba(74, 222, 128, 0.3);">✅ نمایش پاسخ</span>
+                        {% else %}
+                            <span class="chip">🔒 پاسخ‌ها مخفی</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="quiz-actions">
+                        
+                        <a class="btn btn-link-detail btn-sm" href="{{ url_for('quiz_detail', token=q.token) }}">🔗 لینک و جزئیات</a>
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('quiz_results', token=q.token) }}">📊 نتایج</a>
+
+                        {% if not is_locked_quiz %}
+                            <a class="btn btn-edit btn-sm" href="{{ url_for('edit_quiz', token=q.token) }}">✏️ ویرایش</a>
+                        {% else %}
+                            <span class="btn btn-locked btn-sm" title="این آزمون شروع شده و برای حفظ نمرات، قابل ویرایش نیست">🔒 قفل شده</span>
+                        {% endif %}
+                        <form method="post" action="{{ url_for('delete_quiz', token=q.token) }}"
+                              onsubmit="return confirm('آیا از حذف این آزمون مطمئن هستید؟ همه نتایج هم حذف می‌شود.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-danger btn-sm" type="submit">🗑️ حذف</button>
+                        </form>
+
+                        <form method="post" action="{{ url_for('duplicate_quiz', token=q.token) }}"
+                              style="grid-column: 1 / -1; margin: 4px 0 0 0; display: flex;"
+                              onsubmit="return confirm('این آزمون به همراه همه‌ی سوالات و تنظیماتش کپی می‌شود. ادامه می‌دهید؟');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-copy btn-sm" type="submit" style="width: 100%;">
+                                📋 کپی آزمون
+                            </button>
+                        </form>
+
+                        <form method="post" action="{{ url_for('toggle_quiz_lock', token=q.token) }}"
+                              style="grid-column: 1 / -1; margin: 4px 0 0 0; display: flex;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% if q.is_locked %}
+                                <button class="btn btn-unlock btn-sm" type="submit" style="width: 100%;">
+                                    🔓 باز کردن آزمون
+                                </button>
+                            {% else %}
+                                <button class="btn btn-lock btn-sm" type="submit" style="width: 100%;"
+                                        onclick="return confirm('آیا از قفل کردن این آزمون مطمئن هستید؟ دانش‌آموزان نمی‌توانند در آن شرکت کنند.');">
+                                    🔒 قفل کردن آزمون
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">
+            <span class="big">📭</span>
+            هنوز آزمونی نساخته‌اید.<br>
+            از دکمه «ساخت آزمون جدید» شروع کنید.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+(function() {
+    var searchInput = document.getElementById('quiz-search');
+    var quizCards = document.querySelectorAll('.quiz-card');
+    
+    if (!searchInput || quizCards.length === 0) return;
+    
+    searchInput.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        
+        quizCards.forEach(function(card) {
+            var title = card.querySelector('.quiz-title');
+            if (!title) return;
+            
+            var text = title.textContent.toLowerCase();
+            
+            if (query === '' || text.indexOf(query) !== -1) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

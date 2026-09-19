@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.title }}</title>
+    <style>
+
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        @font-face {
+            font-family: 'Vazir';
+            src: url('{{ url_for('static', filename='fonts/Vazir-Bold.ttf') }}');
+        }
+
+        * {
+            font-family: 'Vazir', monospace, sans-serif;
+        }
+
+  	    body {
+            font-family: 'Vazir';
+            color: #000;
+            background: #fff;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-box .num {
+            font-size: 22px;
+            font-weight: bold;
+            color: #0284c7;
+        }
+
+        .stat-box .label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>نام آزمون: {{ quiz.title }}</h1>
+        <p>تاریخ ایجاد: {{ quiz.created_at|jdate }}</p>
+        <p>معلم: {{ session.get('teacher_name') }}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="num">{{ subs|length|fa }}</div>
+            <div class="label">تعداد شرکت‌کنندگان</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ avg|fa }}</div>
+            <div class="label">میانگین نمرات</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ best|fa }}</div>
+            <div class="label">بالاترین نمره</div>  
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ max_score|fa }}</div>
+            <div class="label">نمره آزمون</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ردیف</th>
+                <th>نام و نام خانوادگی</th>
+                <th>کلاس</th>
+                <th>نمره</th>
+                <th>اخطارها</th>
+                <th>زمان ثبت</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subs %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ sub.first_name }} {{ sub.last_name }}</td>
+                <td>{{ sub.class_no|fa }}</td>
+                <td><b>{{ sub.score|fa }}</b></td>
+                <td style="color: {% if sub.warnings > 0 %}red{% else %}green{% endif %}">
+                    {{ sub.warnings|fa or 0|fa }}
+                </td>
+                <td>{{ sub.submitted_at|jdate|fa }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        تولید شده توسط وب سایت QuizDesk
+    </div>
+</body>
+
+</html>

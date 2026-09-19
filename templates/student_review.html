@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}بررسی پاسخ‌ها - {{ quiz.title }}{% endblock %}
+{% block content %}
+<header class="topbar">
+    <div class="shell topbar-in">
+        <a class="logo qd-text" href="{{ url_for('take_result', token=quiz.token) }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="QuizDesk">QuizDesk
+        </a>
+        <div class="topbar-actions">
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('take_result', token=quiz.token) }}">بازگشت به نتیجه</a>
+        </div>
+    </div>
+</header>
+
+<div class="shell" style="padding-bottom: 50px;">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">📝 بررسی پاسخ‌ها</h1>
+            <p class="page-sub">{{ quiz.title }} · {{ sub.first_name }} {{ sub.last_name }}</p>
+        </div>
+    </div>
+
+    <div class="q-list">
+        {% for q, answer in questions_data %}
+        <div class="q-item">
+            <div class="q-text">
+                <!-- <span class="q-num-badge">{{ orig_index.get(q.id, loop.index)|fa }}</span> -->
+                <span class="q-text-content">{{ q.text }}</span>
+                <!-- <span class="q-score-badge">⭐ {{ q.score|fa }} نمره</span> -->
+            </div>
+
+            {% if q.image_path %}
+            <div class="question-image-wrapper">
+                <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+            </div>
+            {% endif %}
+
+            <div class="q-options">
+                {% set opts = [q.option1, q.option2, q.option3, q.option4] %}
+                {% for i in range(4) %}
+                    {% set is_correct = (i + 1 == q.correct) %}
+                    {% set is_selected = answer and answer.selected == (i + 1) %}
+                    
+                    <div class="q-option {% if is_correct %}is-correct{% endif %} {% if is_selected and not is_correct %}is-wrong{% endif %}">
+                        <span class="opt-label">{{ (i + 1)|fa }}</span>
+                        <span class="opt-value">{{ opts[i] }}</span>
+                        {% if is_correct %}
+                            <span class="correct-badge">پاسخ صحیح</span>
+                        {% endif %}
+                        {% if is_selected and not is_correct %}
+                            <span class="wrong-badge">پاسخ شما</span>
+                        {% endif %}
+                    </div>
+
+                {% endfor %}
+                <div class="q-result">
+                    {% if answer and answer.is_correct %}
+                        <span class="result-badge correct">✅ صحیح — {{ q.score|fa }} از {{ q.score|fa }} نمره</span>
+                    {% elif answer and answer.selected %}
+                        <span class="result-badge wrong">❌ غلط — ۰ از {{ q.score|fa }} نمره</span>
+                    {% else %}
+                        <span class="result-badge blank">— بی‌پاسخ — ۰ از {{ q.score|fa }} نمره</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('take_result', token=quiz.token) }}" class="btn btn-ghost">بازگشت به نتیجه</a>
+    </div>
+</div>
+{% endblock %}
