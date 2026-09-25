@@ -37,8 +37,8 @@
 
         {% for q in questions %}
         <div class="card q-card">
-            <div class="q-title">
-                <span class="q-badge">سوال {{ orig_index.get(q.id, loop.index)|fa }}</span>
+            <div class="q-title q-text-content">
+                <span class="q-badge">سوال</span>
                 {{ q.text }}
             </div>
 
