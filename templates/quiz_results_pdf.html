@@ -146,7 +146,7 @@
         <tbody>
             {% for sub in subs %}
             <tr>
-                <td>{{ loop.index }}</td>
+                <td>{{ loop.index|fa }}</td>
                 <td>{{ sub.first_name }} {{ sub.last_name }}</td>
                 <td>{{ sub.class_no|fa }}</td>
                 <td><b>{{ sub.score|fa }}</b></td>
