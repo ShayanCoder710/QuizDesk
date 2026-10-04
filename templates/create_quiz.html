@@ -138,6 +138,9 @@
             var textarea = blocks[k].querySelector('.q-textarea');
             if (textarea) textarea.name = 'q' + k + '_text';
 
+            var idInput = blocks[k].querySelector('.question-id');
+            if (idInput) idInput.name = 'q' + k + '_id';
+
             for (var j = 1; j <= 4; j++) {
                 var optInput = blocks[k].querySelector('.opt-input[name$="_opt' + j + '"]');
                 if (optInput) optInput.name = 'q' + k + '_opt' + j;

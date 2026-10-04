@@ -92,7 +92,7 @@
                     <tr>
                         <td class="td-name">{{ q.title }}</td>
                         <td class="hide-tablet td-name">{{ q.teacher.name }}</td>
-                        <td class="td-center">{{ q.submissions|length|fa }}</td>
+                        <td class="td-center">{{ q.submissions|selectattr('submitted_at')|list|length|fa }}</td>
                         <td class="hide-mobile td-date">{{ q.created_at|jdate }}</td>
                         <td>
                             <a class="btn btn-ghost btn-sm" href="{{ url_for('admin_view_quiz', token=q.token) }}">مشاهده</a>

@@ -1,11 +1,13 @@
 import json
+import os
 import random
 import secrets
 import hashlib
 import hmac
+from pathlib import Path
 from datetime import datetime
 import jdatetime
-from flask import session, flash, redirect, url_for, abort
+from flask import session, flash, redirect, url_for, abort, current_app
 from extensions import db
 from models.models import Teacher, Quiz, Submission, Question, Answer, WarningLog
 
@@ -41,7 +43,7 @@ def get_take(token):
 def order_of(sub):
     try:
         return json.loads(sub.question_order or '[]')
-    except Exception:
+    except (TypeError, ValueError):
         return []
 
 def finalize_submission(sub, form_data):
@@ -94,10 +96,14 @@ def jdate_filter(value):
         return '—'
     jdt = jdatetime.datetime.fromgregorian(datetime=value)
     month_name = PERSIAN_MONTHS[jdt.month - 1]
-    return f"{jdt.day} {month_name} {fa_filter(jdt.year)} — {fa_filter(jdt.strftime('%H:%M'))}"
+    return f"{fa_filter(jdt.day)} {month_name} {fa_filter(jdt.year)} — {fa_filter(jdt.strftime('%H:%M'))}"
 
 def jtime_filter(value):
     if not value:
         return '—'
     jdt = jdatetime.datetime.fromgregorian(datetime=value)
     return fa_filter(jdt.strftime('%H:%M:%S'))
+
+def font_file_url(filename):
+    path = os.path.abspath(os.path.join(current_app.root_path, 'static', 'fonts', filename))
+    return Path(path).as_uri()

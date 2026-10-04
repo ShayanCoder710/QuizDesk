@@ -19,6 +19,8 @@ MAX_IMAGE_SIZE = 5 * 1024 * 1024
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+app.config['MAX_FORM_MEMORY_SIZE'] = 20 * 1024 * 1024
+app.config['MAX_FORM_PARTS'] = 2000
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -32,7 +34,7 @@ def image_size(file_storage):
         size = file_storage.stream.tell()
         file_storage.stream.seek(0)
         return size
-    except Exception:
+    except OSError:
         return 0
 
 def save_question_image(file, token, q_index):
@@ -148,7 +150,7 @@ def admin_delete_teacher(teacher_id):
                     if os.path.exists(filepath):
                         try:
                             os.remove(filepath)
-                        except Exception:
+                        except OSError:
                             pass
             db.session.delete(quiz)
         db.session.delete(teacher)
@@ -170,7 +172,7 @@ def admin_delete_quiz(token):
             if os.path.exists(filepath):
                 try:
                     os.remove(filepath)
-                except Exception:
+                except OSError:
                     pass
     db.session.delete(quiz)
     db.session.commit()
@@ -322,8 +324,9 @@ def edit_quiz(token):
     
     quiz = func.owned_quiz_or_404(token)
     
-    if quiz.submissions:
-        flash('این آزمون قبلاً توسط دانش‌آموزان شرکت شده است. برای حفظ یکپارچگی نمرات و پاسخ‌ها، ویرایش سوالات امکان‌پذیر نیست. لطفاً یک آزمون جدید بسازید.', 'err')
+    finished = [s for s in quiz.submissions if s.submitted_at]
+    if finished:
+        flash('این آزمون قبلاً توسط دانش‌آموزان ثبت نهایی شده است. برای حفظ یکپارچگی نمرات و پاسخ‌ها، ویرایش سوالات امکان‌پذیر نیست. لطفاً یک آزمون جدید بسازید.', 'err')
         return redirect(url_for('quiz_detail', token=quiz.token))
     
     if request.method == 'POST':
@@ -479,6 +482,7 @@ def duplicate_quiz(token):
     db.session.add(new_quiz)
     db.session.flush()
     
+    missing_images = 0
     for idx, q in enumerate(original_quiz.questions):
         new_image_path = None
         if q.image_path:
@@ -489,6 +493,8 @@ def duplicate_quiz(token):
             if os.path.exists(old_filepath):
                 shutil.copy2(old_filepath, new_filepath)
                 new_image_path = new_filename
+            else:
+                missing_images += 1
         
         new_q = Question(
             quiz_id=new_quiz.id,
@@ -504,7 +510,10 @@ def duplicate_quiz(token):
         db.session.add(new_q)
     
     db.session.commit()
-    flash('آزمون با موفقیت کپی شد و اکنون قابل ویرایش است. ✅', 'ok')
+    if missing_images:
+        flash(f'آزمون کپی شد. ⚠️ توجه: برای {missing_images} سوال، فایل تصویر روی دیسک پیدا نشد و بدون تصویر کپی شد.', 'err')
+    else:
+        flash('آزمون با موفقیت کپی شد و اکنون قابل ویرایش است. ✅', 'ok')
     return redirect(url_for('edit_quiz', token=new_token))
 
 @app.route('/teacher/quiz/<token>')
@@ -525,7 +534,10 @@ def delete_quiz(token):
         if q.image_path:
             filepath = os.path.join(UPLOAD_FOLDER, q.image_path)
             if os.path.exists(filepath):
-                os.remove(filepath)
+                try:
+                    os.remove(filepath)
+                except OSError:
+                    pass
     db.session.delete(quiz)
     db.session.commit()
     flash('آزمون حذف شد.', 'ok')
@@ -556,8 +568,7 @@ def quiz_results_pdf(token):
     best = max((s.score for s in subs), default=0)
     max_score = sum(q.score for q in quiz.questions)
 
-    font_path = os.path.join(app.root_path, 'static', 'fonts', 'IRANYakanX.woff')
-    font_url = f"file://{os.path.abspath(font_path)}"
+    font_url = func.font_file_url('Vazir-Bold.ttf')
     
     html_content = render_template(
         'quiz_results_pdf.html', 
@@ -569,7 +580,14 @@ def quiz_results_pdf(token):
         font_url=font_url
     )
     
-    pdf_file = HTML(string=html_content, base_url=request.url_root).write_pdf()
+    try:
+        pdf_file = HTML(string=html_content).write_pdf()
+    except (OSError, ValueError) as e:
+        app.logger.error('PDF render failed for quiz %s: %s', quiz.token, e)
+        return render_template('message.html', title='خطا در ساخت PDF',
+                               text='ساخت فایل PDF ممکن نشد. لطفاً دوباره تلاش کنید.',
+                               back_url=url_for('quiz_results', token=quiz.token),
+                               back_label='بازگشت به نتایج'), 500
     
     return Response(
         pdf_file,
@@ -823,7 +841,7 @@ def delete_account():
                 if os.path.exists(filepath):
                     try:
                         os.remove(filepath)
-                    except Exception:
+                    except OSError:
                         pass
     
     db.session.delete(teacher)
@@ -859,4 +877,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5005, debug=True)

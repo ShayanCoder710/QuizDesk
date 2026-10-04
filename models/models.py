@@ -17,7 +17,7 @@ class Quiz(db.Model):
     time_limit = db.Column(db.Integer, nullable=False)
     shuffle_questions = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
-    questions = db.relationship('Question', backref='quiz', lazy=True, cascade='all, delete-orphan')
+    questions = db.relationship('Question', backref='quiz', lazy=True, cascade='all, delete-orphan', order_by='Question.id')
     submissions = db.relationship('Submission', backref='quiz', lazy=True, cascade='all, delete-orphan')
     show_answers = db.Column(db.Boolean, default=False)
     is_locked = db.Column(db.Boolean, default=False)

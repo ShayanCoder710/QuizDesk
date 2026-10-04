@@ -50,7 +50,7 @@
                         <tr>
                             <td>{{ loop.index|fa }}</td>
                             <td style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</td>
-                            <td>{{ s.class_no }}</td>
+                            <td>{{ s.class_no|fa }}</td>
                             <td><span class="badge badge-score">{{ s.score|fa }} از {{ max_score|fa }}</span></td>
                             <td>
                                 {% if s.warnings %}

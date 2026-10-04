@@ -8,7 +8,7 @@
         <div>
             <div class="exam-title">📝 {{ quiz.title }}</div>
             <div class="exam-sub">
-                {{ sub.first_name }} {{ sub.last_name }} · کلاس {{ sub.class_no }}
+                {{ sub.first_name }} {{ sub.last_name }} · کلاس {{ sub.class_no|fa }}
                 · <span class="warn-chip">⚠ اخطارها: <span id="warn-count">{{ sub.warnings|fa }}</span></span>
             </div>
         </div>

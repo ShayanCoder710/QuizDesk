@@ -13,7 +13,7 @@
 
         @font-face {
             font-family: 'Vazir';
-            src: url('{{ url_for('static', filename='fonts/Vazir-Bold.ttf') }}');
+            src: url('{{ font_url }}');
         }
 
         * {
@@ -150,10 +150,8 @@
                 <td>{{ sub.first_name }} {{ sub.last_name }}</td>
                 <td>{{ sub.class_no|fa }}</td>
                 <td><b>{{ sub.score|fa }}</b></td>
-                <td style="color: {% if sub.warnings > 0 %}red{% else %}green{% endif %}">
-                    {{ sub.warnings|fa or 0|fa }}
-                </td>
-                <td>{{ sub.submitted_at|jdate|fa }}</td>
+                <td style="color: {% if sub.warnings > 0 %}red{% else %}green{% endif %}">{{ (sub.warnings or 0)|fa }}</td>
+                <td>{{ sub.submitted_at|jdate }}</td>
             </tr>
             {% endfor %}
         </tbody>

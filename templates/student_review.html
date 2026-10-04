@@ -54,7 +54,7 @@
                 {% endfor %}
                 <div class="q-result">
                     {% if answer and answer.is_correct %}
-                        <span class="result-badge correct">✅ صحیح — {{ q.score|fa }} از {{ q.score|fa }} نمره</span>
+                        <span class="result-badge correct">✅ صحیح — {{ q.score|fa }} نمره</span>
                     {% elif answer and answer.selected %}
                         <span class="result-badge wrong">❌ غلط — ۰ از {{ q.score|fa }} نمره</span>
                     {% else %}

@@ -15,7 +15,7 @@
 <div class="shell" style="padding-bottom:50px;">
     <div class="card review-head">
         <h1 class="page-title">👤 {{ sub.first_name }} {{ sub.last_name }}</h1>
-        <p class="page-sub">شماره کلاس: {{ sub.class_no }} — زمان ثبت: {{ sub.submitted_at|jdate }}</p>
+        <p class="page-sub">شماره کلاس: {{ sub.class_no|fa }} — زمان ثبت: {{ sub.submitted_at|jdate }}</p>
         
         {% set max_score = quiz.questions | map(attribute='score') | sum %}
         
