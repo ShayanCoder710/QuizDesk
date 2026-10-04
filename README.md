@@ -36,8 +36,3 @@ python app.py
 ## Notes
 
 - `.gitignore` excludes `config.py`, `wsgi.py`, and `Procfile` — copy them manually on deploy.
-Mirror test.
-
-Mirror test 2.
-
-Mirror test 3.
