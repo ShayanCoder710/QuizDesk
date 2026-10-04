@@ -18,7 +18,7 @@ An online quiz platform for teachers. Create multiple-choice quizzes, share link
 - **Database:** MySQL (SQLAlchemy ORM)
 - **PDF:** WeasyPrint
 - **Calendar:** jdatetime (Persian Jalali dates)
-- **Security:** Flask-WTF CSRF protection, bcrypt-style password hashing
+- **Security:** Flask-WTF CSRF protection, salted SHA-256 password hashing
 
 ## Getting Started
 
