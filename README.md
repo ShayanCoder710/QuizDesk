@@ -32,3 +32,7 @@ pip install -r requirements.txt
 # Run
 python app.py
 ```
+
+## Notes
+
+- `.gitignore` excludes `config.py`, `wsgi.py`, and `Procfile` — copy them manually on deploy.
