@@ -46,3 +46,5 @@ Test marker 3.
 m4.
 
 m5.
+
+m6.
