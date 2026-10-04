@@ -36,17 +36,3 @@ python app.py
 ## Notes
 
 - `.gitignore` excludes `config.py`, `wsgi.py`, and `Procfile` — copy them manually on deploy.
-
-Test marker.
-
-Test marker 2.
-
-Test marker 3.
-
-m4.
-
-m5.
-
-m6.
-
-m7.
