@@ -66,9 +66,9 @@ a {
     text-decoration: none;
 }
 
-/* a:hover {
+a:hover {
     opacity: .85;
-} */
+}
 
 .shell {
     width: 92%;
@@ -179,7 +179,6 @@ body.light-theme .btn-locked {
     border-color: rgba(138, 138, 138, 0.25);
 }
 
-/* دکمه ویرایش (سبز) */
 .btn-edit {
     background: rgba(74, 222, 128, 0.1);
     border: 1px solid rgba(74, 222, 128, 0.35);

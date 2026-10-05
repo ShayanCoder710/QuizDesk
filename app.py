@@ -705,8 +705,6 @@ def take_submit(token):
     quiz, sub = func.get_take(token)
     if not quiz or not sub or sub.submitted_at:
         return redirect(url_for('take_quiz', token=token))
-    # Lock the submission row so two simultaneous submits can't both pass the
-    # submitted_at check and grade twice (which would create duplicate answers).
     locked = db.session.execute(
         db.select(Submission).where(Submission.id == sub.id).with_for_update()
     ).scalar_one_or_none()
@@ -877,4 +875,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5005, debug=True)
+    app.run(host='0.0.0.0', port=5005)
