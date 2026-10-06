@@ -279,19 +279,24 @@ body.light-theme .btn-edit {
 }
 
 .topbar {
-    background: rgba(5, 5, 5, .9);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
     position: sticky;
-    top: 0;
+    top: 14px;
     z-index: 20;
+    margin: 14px auto 0;
+    width: 92%;
+    background: rgba(5, 5, 5, .82);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
 }
 
 .topbar-in {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 64px;
+    height: 62px;
+    padding: 0 18px;
 }
 
 .logo {
@@ -1507,8 +1512,9 @@ body.light-theme .bg-glow {
 }
 
 body.light-theme .topbar {
-    background: rgba(255, 255, 255, .95);
-    border-bottom-color: #e0e0e0;
+    background: rgba(255, 255, 255, .88);
+    border-color: #e0e0e0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
 }
 
 body.light-theme .topbar-actions .hello {
