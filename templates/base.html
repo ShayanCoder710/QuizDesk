@@ -23,7 +23,7 @@
     <script type="module">
         import { Eggy } from '{{ url_for("static", filename="js/eggy.js") }}';
         const flashes = {{ messages|tojson }};
-        const types = { ok: "success", err: "error" };
+        const types = { ok: "info", err: "error" };
         const esc = (s) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         flashes.forEach(function ([cat, msg], i) {
             setTimeout(function () {
@@ -32,7 +32,7 @@
                     type: types[cat] || "info",
                     title: "",
                     message: esc(msg),
-                    duration: Math.max(5000, msg.length * 40)
+                    duration: 10000
                 });
             }, i * 500);
         });
