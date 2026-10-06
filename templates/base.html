@@ -20,11 +20,23 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div class="flash-area shell">
-        {% for cat, msg in messages %}
-        <div class="flash {{ cat }}">{{ msg }}</div>
-        {% endfor %}
-    </div>
+    <script type="module">
+        import { Eggy } from '{{ url_for("static", filename="js/eggy.js") }}';
+        const flashes = {{ messages|tojson }};
+        const types = { ok: "success", err: "error" };
+        const esc = (s) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        flashes.forEach(function ([cat, msg], i) {
+            setTimeout(function () {
+                Eggy({
+                    position: "bottom-right",
+                    type: types[cat] || "info",
+                    title: "",
+                    message: esc(msg),
+                    duration: Math.max(5000, msg.length * 40)
+                });
+            }, i * 500);
+        });
+    </script>
     {% endif %}
     {% endwith %}
 
