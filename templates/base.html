@@ -10,7 +10,7 @@
     <title>QuizDesk | {% block title %}ساخت آزمون آنلاین{% endblock %}</title>
     <meta name="description" content="{% block meta_desc %}ساخت آزمون آنلاین چهارگزینه‌ای با QuizDesk{% endblock %}">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ mtime }}">
     {% block head %}{% endblock %}
 </head>
 

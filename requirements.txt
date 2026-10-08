@@ -7,7 +7,6 @@ charset-normalizer==2.0.7
 click==8.4.2
 colorama==0.4.4
 cssselect2==0.9.0
-fire==0.7.1
 Flask==3.1.3
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.3.0
@@ -36,7 +35,6 @@ readchar==2.0.1
 regex==2023.6.3
 requests==2.26.0
 requests-toolbelt==0.9.1
-runflare==1.2.0
 setuptools==69.0.3
 six==1.16.0
 spinners==0.0.24

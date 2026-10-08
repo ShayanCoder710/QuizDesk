@@ -58,6 +58,15 @@ app.add_template_filter(func.fa_filter, 'fa')
 app.add_template_filter(func.jdate_filter, 'jdate')
 app.add_template_filter(func.jtime_filter, 'jtime')
 
+@app.context_processor
+def inject_asset_mtime():
+    css_path = os.path.join(app.root_path, 'static', 'css', 'style.css')
+    js_path = os.path.join(app.root_path, 'static', 'js', 'eggy.js')
+    try:
+        return {'mtime': int(max(os.path.getmtime(css_path), os.path.getmtime(js_path)))}
+    except OSError:
+        return {'mtime': 0}
+
 @app.route('/')
 def index():
     if session.get('teacher_id'):

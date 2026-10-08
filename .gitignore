@@ -5,3 +5,6 @@
 /.cloud/
 /config.py
 /uploads/
+
+.cloud/
+/.cloud
