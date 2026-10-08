@@ -196,6 +196,39 @@ body.light-theme .btn-edit {
     color: #16a34a;
 }
 
+.btn-app {
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.45);
+    color: #4ade80;
+}
+
+.btn-app:hover {
+    background: rgba(74, 222, 128, 0.22);
+    border-color: rgba(74, 222, 128, 0.6);
+    box-shadow: 0 6px 18px rgba(74, 222, 128, .18);
+}
+
+.btn-app .qt {
+    color: inherit;
+}
+
+body.light-theme .btn-app {
+    background: rgba(22, 163, 74, 0.1);
+    border-color: rgba(22, 163, 74, 0.3);
+    color: #16a34a;
+}
+
+body.light-theme .btn-app:hover {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: rgba(22, 163, 74, 0.5);
+}
+
+.landing-app-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+}
+
 .btn-lg {
     height: 52px;
     font-size: 16px;
