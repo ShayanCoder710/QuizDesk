@@ -2371,7 +2371,7 @@ body.light-theme .btn-link-detail:hover {
 body .eggy.bottom-right {
     right: 20px;
     bottom: 20px;
-    z-index: 60;
+    z-index: 9999;
 }
 
 .eggy.bottom-right > div {
