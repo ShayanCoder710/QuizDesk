@@ -227,6 +227,13 @@ body.light-theme .btn-app:hover {
     display: flex;
     justify-content: center;
     margin-top: 18px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.landing-app-row .btn {
+    width: 100%;
 }
 
 .btn-lg {
@@ -1992,10 +1999,15 @@ body.light-theme .btn-copy:hover {
 }
 
 .landing-cta {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.landing-cta .btn-lg {
+    width: 100%;
 }
 
 .landing-section-title {
@@ -2462,6 +2474,13 @@ body.light-theme .eggy.bottom-right > div {
         gap: 10px;
     }
 
+    .landing-cta .btn {
+        width: 100%;
+        height: 48px;
+        padding: 0 14px;
+        font-size: 15px;
+    }
+
     .landing-app-row .btn {
         width: 100%;
     }
@@ -2480,6 +2499,24 @@ body.light-theme .eggy.bottom-right > div {
 
     .res-search-btns .btn {
         flex: 1;
+    }
+
+    .landing-final-cta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 34px 20px;
+    }
+
+    .landing-final-cta h2,
+    .landing-final-cta p {
+        margin: 0;
+    }
+
+    .landing-final-cta .btn {
+        width: 100%;
+        max-width: 340px;
     }
 }
 
@@ -2641,11 +2678,6 @@ body.light-theme .eggy.bottom-right > div {
     }
 
     .landing-final-cta .btn {
-        width: 100%;
-    }
-
-    .landing-final-cta .landing-app-row {
-        margin-top: 0;
         width: 100%;
     }
 
