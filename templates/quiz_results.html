@@ -26,29 +26,29 @@
 
     {% if subs or filtered %}
 
-        <form class="form-card card" method="get" action="{{ url_for('quiz_results', token=quiz.token) }}" style="margin: 20px 0;">
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
-                <div class="field" style="margin: 0; flex: 1 1 180px;">
+        <form class="form-card card res-search" method="get" action="{{ url_for('quiz_results', token=quiz.token) }}">
+            <div class="res-search-row">
+                <div class="field res-f-name">
                     <label>جستجوی دانش‌آموز</label>
-                    <input class="input" type="text" name="name" placeholder="نام یا نام خانوادگی" value="{{ search }}" style="height: 42px; font-size: 14px;">
+                    <input class="input" type="text" name="name" placeholder="نام یا نام خانوادگی" value="{{ search }}">
                 </div>
-                <div class="field" style="margin: 0; flex: 0 1 150px;">
+                <div class="field res-f-score">
                     <label>نمره دقیق</label>
-                    <input class="input" type="number" name="score" step="any" placeholder="اعشاری بنویسید" value="{{ search_score }}" style="height: 42px; font-size: 14px; direction: ltr; text-align: right;">
+                    <input class="input" type="number" name="score" step="any" placeholder="اعشاری بنویسید" value="{{ search_score }}">
                 </div>
-                <div class="field" style="margin: 0; flex: 0 1 120px;">
+                <div class="field res-f-warn">
                     <label>تعداد اخطار</label>
-                    <input class="input" type="number" name="warn" min="0" placeholder="مثلاً ۳" value="{{ search_warn }}" style="height: 42px; font-size: 14px; direction: ltr; text-align: right;">
+                    <input class="input" type="number" name="warn" min="0" placeholder="مثلاً ۳" value="{{ search_warn }}">
                 </div>
-                <div class="field" style="margin: 0; flex: 1 1 150px;">
+                <div class="field res-f-date">
                     <label>از تاریخ (هجری)</label>
-                    <input class="input" type="text" name="d_from" placeholder="۱۴۰۵/۰۶/۱۵" value="{{ search_d_from }}" style="height: 42px; font-size: 14px;">
+                    <input class="input" type="text" name="d_from" placeholder="۱۴۰۵/۰۶/۱۵" value="{{ search_d_from }}">
                 </div>
-                <div class="field" style="margin: 0; flex: 1 1 150px;">
+                <div class="field res-f-date">
                     <label>تا تاریخ (هجری)</label>
-                    <input class="input" type="text" name="d_to" placeholder="۱۴۰۵/۰۷/۰۱" value="{{ search_d_to }}" style="height: 42px; font-size: 14px;">
+                    <input class="input" type="text" name="d_to" placeholder="۱۴۰۵/۰۷/۰۱" value="{{ search_d_to }}">
                 </div>
-                <div style="display: flex; gap: 8px; flex: 0 0 auto;">
+                <div class="res-search-btns">
                     <button type="submit" class="btn btn-primary">جستجو</button>
                     <a class="btn btn-ghost" href="{{ url_for('quiz_results', token=quiz.token) }}">پاک کردن</a>
                 </div>
