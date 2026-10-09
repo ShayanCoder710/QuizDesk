@@ -6,7 +6,9 @@ from extensions import db, csrf
 from models.models import Teacher, Quiz, Submission, Question, Answer, WarningLog
 import func
 import secrets, random, json, os
-from datetime import datetime
+import jdatetime
+from datetime import datetime, timedelta
+from sqlalchemy import or_
 from weasyprint import HTML
 import shutil
 
@@ -559,11 +561,43 @@ def quiz_results(token):
         flash('لطفاً ابتدا وارد حساب خود شوید.', 'err')
         return redirect(url_for('login'))
     quiz = func.owned_quiz_or_404(token)
-    subs = Submission.query.filter_by(quiz_id=quiz.id).filter(Submission.submitted_at.isnot(None)).order_by(Submission.submitted_at.desc()).all()
+    q = Submission.query.filter_by(quiz_id=quiz.id).filter(Submission.submitted_at.isnot(None))
+
+    name = (request.args.get('name') or '').strip()
+    score_v = (request.args.get('score') or '').strip()
+    warn_v = (request.args.get('warn') or '').strip()
+    d_from = (request.args.get('d_from') or '').strip()
+    d_to = (request.args.get('d_to') or '').strip()
+
+    active = False
+    if name:
+        like = f"%{name}%"
+        q = q.filter(or_(Submission.first_name.ilike(like), Submission.last_name.ilike(like)))
+        active = True
+    score_n = func.to_float(score_v)
+    if score_v and score_n is not None:
+        q = q.filter(Submission.score == score_n)
+        active = True
+    warn_n = func.to_int(warn_v)
+    if warn_v and warn_n is not None:
+        q = q.filter(Submission.warnings == warn_n)
+        active = True
+    start_dt = func.parse_jalali_date(d_from)
+    end_dt = func.parse_jalali_date(d_to)
+    if start_dt:
+        q = q.filter(Submission.submitted_at >= start_dt)
+        active = True
+    if end_dt:
+        q = q.filter(Submission.submitted_at < end_dt + timedelta(days=1))
+        active = True
+
+    subs = q.order_by(Submission.submitted_at.desc()).all()
     avg = round(sum(s.score for s in subs) / len(subs), 1) if subs else 0
     best = max((s.score for s in subs), default=0)
-    max_score = sum(q.score for q in quiz.questions)
-    return render_template('quiz_results.html', quiz=quiz, subs=subs, avg=avg, best=best, max_score=max_score)
+    max_score = sum(qz.score for qz in quiz.questions)
+    return render_template('quiz_results.html', quiz=quiz, subs=subs, avg=avg, best=best, max_score=max_score,
+                          search=name, search_score=score_v, search_warn=warn_v,
+                          search_d_from=d_from, search_d_to=d_to, filtered=active)
 
 @app.route('/teacher/quiz/<token>/results/pdf')
 def quiz_results_pdf(token):

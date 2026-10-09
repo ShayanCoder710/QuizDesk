@@ -5,7 +5,7 @@ import secrets
 import hashlib
 import hmac
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import jdatetime
 from flask import session, flash, redirect, url_for, abort, current_app
 from extensions import db
@@ -107,3 +107,48 @@ def jtime_filter(value):
 def font_file_url(filename):
     path = os.path.abspath(os.path.join(current_app.root_path, 'static', 'fonts', filename))
     return Path(path).as_uri()
+
+FA_TO_ASCII = {ch: str(i) for i, ch in enumerate(FA_DIGITS)}
+FA_TO_ASCII.update({'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'})
+
+def fa_to_ascii(text):
+    if not text:
+        return ''
+    return ''.join(FA_TO_ASCII.get(ch, ch) for ch in str(text))
+
+def to_int(text, default=None):
+    t = fa_to_ascii(str(text)).strip()
+    if not t:
+        return default
+    try:
+        return int(t)
+    except ValueError:
+        return default
+
+def to_float(text, default=None):
+    t = fa_to_ascii(str(text)).strip()
+    if not t:
+        return default
+    try:
+        return float(t)
+    except ValueError:
+        return default
+
+def jalali_to_gregorian(y, m, d):
+    return jdatetime.datetime(int(y), int(m), int(d)).togregorian()
+
+def parse_jalali_date(text):
+    if not text:
+        return None
+    t = fa_to_ascii(str(text)).strip()
+    parts = [p for p in t.replace('/', ' ').replace('-', ' ').split() if p]
+    if len(parts) != 3:
+        return None
+    try:
+        y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        return None
+    try:
+        return jalali_to_gregorian(y, m, d)
+    except (ValueError, OverflowError):
+        return None

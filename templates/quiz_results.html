@@ -18,56 +18,92 @@
             <h1 class="page-title">📊 نتایج آزمون «{{ quiz.title }}»</h1>
             <p class="page-sub" style="font-size: 15px;">
                 حداکثر نمره آزمون: <b>{{ max_score|fa }}</b>
-                میانگین نمره: <b>{{ avg|fa }}</b> از {{ max_score|fa }} 
+                میانگین نمره: <b>{{ avg|fa }}</b> از {{ max_score|fa }}
                 — بهترین نمره: <b style="color: var(--ok);">{{ best|fa }}</b>
             </p>
         </div>
     </div>
 
-    {% if subs %}
+    {% if subs or filtered %}
 
-        <div style="margin-bottom: 16px;">
-            <a class="btn btn-primary btn-block" href="{{ url_for('quiz_results_pdf', token=quiz.token) }}" style="text-align: center;">
-                دانلود نتایج به صورت فایل PDF
-            </a>
-        </div>
+        <form class="form-card card" method="get" action="{{ url_for('quiz_results', token=quiz.token) }}" style="margin: 20px 0;">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+                <div class="field" style="margin: 0; flex: 1 1 180px;">
+                    <label>جستجوی دانش‌آموز</label>
+                    <input class="input" type="text" name="name" placeholder="نام یا نام خانوادگی" value="{{ search }}" style="height: 42px; font-size: 14px;">
+                </div>
+                <div class="field" style="margin: 0; flex: 0 1 120px;">
+                    <label>نمره دقیق</label>
+                    <input class="input" type="number" name="score" placeholder="مثلاً ۱۴" value="{{ search_score }}" style="height: 42px; font-size: 14px; direction: ltr; text-align: right;">
+                </div>
+                <div class="field" style="margin: 0; flex: 0 1 120px;">
+                    <label>تعداد اخطار</label>
+                    <input class="input" type="number" name="warn" min="0" placeholder="مثلاً ۳" value="{{ search_warn }}" style="height: 42px; font-size: 14px; direction: ltr; text-align: right;">
+                </div>
+                <div class="field" style="margin: 0; flex: 1 1 150px;">
+                    <label>از تاریخ (هجری)</label>
+                    <input class="input" type="text" name="d_from" placeholder="۱۴۰۵/۰۶/۱۵" value="{{ search_d_from }}" style="height: 42px; font-size: 14px;">
+                </div>
+                <div class="field" style="margin: 0; flex: 1 1 150px;">
+                    <label>تا تاریخ (هجری)</label>
+                    <input class="input" type="text" name="d_to" placeholder="۱۴۰۵/۰۷/۰۱" value="{{ search_d_to }}" style="height: 42px; font-size: 14px;">
+                </div>
+                <div style="display: flex; gap: 8px; flex: 0 0 auto;">
+                    <button type="submit" class="btn btn-primary">جستجو</button>
+                    <a class="btn btn-ghost" href="{{ url_for('quiz_results', token=quiz.token) }}">پاک کردن</a>
+                </div>
+            </div>
+        </form>
 
-        <div class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">#</th>
-                        <th>نام دانش‌آموز</th>
-                        <th>شماره کلاس</th>
-                        <th>نمره</th>
-                        <th>اخطار خروج از تب</th>
-                        <th>زمان ثبت</th>
-                        <th style="width: 100px;">عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in subs %}
+        {% if subs %}
+            <div style="margin-bottom: 16px;">
+                <a class="btn btn-primary btn-block" href="{{ url_for('quiz_results_pdf', token=quiz.token) }}" style="text-align: center;">
+                    دانلود نتایج به صورت فایل PDF
+                </a>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ loop.index|fa }}</td>
-                            <td style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</td>
-                            <td>{{ s.class_no|fa }}</td>
-                            <td><span class="badge badge-score">{{ s.score|fa }} از {{ max_score|fa }}</span></td>
-                            <td>
-                                {% if s.warnings %}
-                                    <span class="badge badge-warn">⚠ {{ s.warnings|fa }} اخطار</span>
-                                {% else %}
-                                    <span class="badge badge-ok">بدون اخطار</span>
-                                {% endif %}
-                            </td>
-                            <td style="font-size: 13px;">{{ s.submitted_at|jdate }}</td>
-                            <td>
-                                <a class="btn btn-ghost btn-sm" href="{{ url_for('submission_detail', sid=s.id) }}">جزئیات</a>
-                            </td>
+                            <th style="width: 50px;">#</th>
+                            <th>نام دانش‌آموز</th>
+                            <th>شماره کلاس</th>
+                            <th>نمره</th>
+                            <th>اخطار خروج از تب</th>
+                            <th>زمان ثبت</th>
+                            <th style="width: 100px;">عملیات</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        {% for s in subs %}
+                            <tr>
+                                <td>{{ loop.index|fa }}</td>
+                                <td style="font-weight: 500;">{{ s.first_name }} {{ s.last_name }}</td>
+                                <td>{{ s.class_no|fa }}</td>
+                                <td><span class="badge badge-score">{{ s.score|fa }} از {{ max_score|fa }}</span></td>
+                                <td>
+                                    {% if s.warnings %}
+                                        <span class="badge badge-warn">⚠ {{ s.warnings|fa }} اخطار</span>
+                                    {% else %}
+                                        <span class="badge badge-ok">بدون اخطار</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-size: 13px;">{{ s.submitted_at|jdate }}</td>
+                                <td>
+                                    <a class="btn btn-ghost btn-sm" href="{{ url_for('submission_detail', sid=s.id) }}">جزئیات</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">
+                <span class="big">🔍</span>
+                <p>هیچ دانش‌آموزی با این فیلترها پیدا نشد. فیلترها را تغییر دهید یا پاک کنید.</p>
+            </div>
+        {% endif %}
 
     {% else %}
         <div class="empty">
