@@ -1,10 +1,8 @@
-/__pycache__/
+__pycache__/
+*.pyc
 /wsgi.py
 /Procfile
-/OpenCode.txt
 /.cloud/
 /config.py
 /uploads/
-
 .cloud/
-/.cloud

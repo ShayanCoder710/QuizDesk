@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory, Response
-from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFError
 from config import MYSQL_CONFIG, SECRET_KEY
 from extensions import db, csrf
@@ -9,6 +8,7 @@ import secrets, random, json, os
 import jdatetime
 from datetime import datetime, timedelta
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from weasyprint import HTML
 import shutil
 
@@ -41,7 +41,7 @@ def image_size(file_storage):
 
 def save_question_image(file, token, q_index):
     if file and allowed_file(file.filename):
-        ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
+        ext = file.filename.rsplit('.', 1)[1].lower()
         filename = f"{token}_q{q_index}.{ext}"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
@@ -130,8 +130,10 @@ def admin_panel():
     if session.get('teacher_username') != ADMIN_USERNAME:
         abort(403)
     
-    teachers = Teacher.query.all()
-    quizzes = Quiz.query.order_by(Quiz.created_at.desc()).all()
+    teachers = db.session.query(Teacher).options(joinedload(Teacher.quizzes)).all()
+    quizzes = db.session.query(Quiz).order_by(Quiz.created_at.desc()).options(
+        joinedload(Quiz.teacher), joinedload(Quiz.submissions)
+    ).all()
     total_submissions = Submission.query.filter(Submission.submitted_at.isnot(None)).count()
     
     return render_template('admin.html', teachers=teachers, quizzes=quizzes, total_submissions=total_submissions, admin_username=ADMIN_USERNAME)
@@ -203,7 +205,13 @@ def panel():
         flash('لطفاً ابتدا وارد حساب خود شوید.', 'err')
         return redirect(url_for('login'))
     teacher = db.session.get(Teacher, session['teacher_id'])
-    quizzes = Quiz.query.filter_by(teacher_id=teacher.id).order_by(Quiz.created_at.desc()).all()
+    if not teacher:
+        session.clear()
+        flash('حساب شما پیدا نشد. لطفاً دوباره وارد شوید.', 'err')
+        return redirect(url_for('login'))
+    quizzes = db.session.query(Quiz).filter(Quiz.teacher_id == teacher.id).order_by(Quiz.created_at.desc()).options(
+        joinedload(Quiz.questions), joinedload(Quiz.submissions)
+    ).all()
     total_students = sum(len([s for s in q.submissions if s.submitted_at]) for q in quizzes)
     total_questions = sum(len(q.questions) for q in quizzes)
     return render_template('panel.html', teacher=teacher, quizzes=quizzes, total_students=total_students, total_questions=total_questions)
@@ -660,7 +668,7 @@ def submission_detail(sid):
     if not session.get('teacher_id'):
         flash('لطفاً ابتدا وارد حساب خود شوید.', 'err')
         return redirect(url_for('login'))
-    sub = db.session.get(Submission, sid)
+    sub = db.session.query(Submission).options(joinedload(Submission.answers)).get(sid)
     if not sub or not sub.submitted_at:
         abort(404)
     quiz = db.session.get(Quiz, sub.quiz_id)
@@ -832,6 +840,10 @@ def teacher_settings():
         return redirect(url_for('login'))
     
     teacher = db.session.get(Teacher, session['teacher_id'])
+    if not teacher:
+        session.clear()
+        flash('حساب شما پیدا نشد. لطفاً دوباره وارد شوید.', 'err')
+        return redirect(url_for('login'))
     
     if request.method == 'POST':
         current_password = request.form.get('current_password', '')

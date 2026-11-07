@@ -91,6 +91,12 @@
         return String(n).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
     };
 
+    var escHtml = function (s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    };
+
     window.updateFileName = function(input, labelId) {
         var label = document.getElementById(labelId);
         var textSpan = label.querySelector('.upload-text');
@@ -193,12 +199,12 @@
                 '<label class="opt-line">' +
                     '<input type="radio" name="q' + i + '_correct" value="' + j + '"' + isChecked + '>' +
                     '<span class="radio-dot"></span>' +
-                    '<input type="text" class="input opt-input" name="q' + i + '_opt' + j + '" placeholder="گزینه ' + toFa(j) + '" value="' + (optValue || '') + '">' +
+                    '<input type="text" class="input opt-input" name="q' + i + '_opt' + j + '" placeholder="گزینه ' + toFa(j) + '" value="' + escHtml(optValue || '') + '">' +
                 '</label>';
         }
 
-        var textareaContent = prefillData ? prefillData.text : '';
-        var uploadText = prefillData && prefillData.image_path ? '✅ ' + prefillData.image_path : 'برای انتخاب عکس کلیک کنید';
+        var textareaContent = prefillData ? escHtml(prefillData.text) : '';
+        var uploadText = prefillData && prefillData.image_path ? '✅ ' + escHtml(prefillData.image_path) : 'برای انتخاب عکس کلیک کنید';
         var scoreValue = (prefillData && prefillData.score !== undefined && prefillData.score !== null) ? prefillData.score : 1;
 
         var hasOldImage = prefillData && prefillData.image_path;
@@ -234,7 +240,7 @@
             '<p class="hint">برای مشخص کردن گزینه صحیح، دایره‌ی کنار هر گزینه را تیک بزنید.</p>' +
             '<div class="field" style="margin-top: 16px;">' +
                 '<label>⭐ نمره این سوال</label>' +
-                '<input type="number" class="input score-input" name="q' + i + '_score" value="' + scoreValue + '" step="0.25" min="0" max="100" style="max-width: 180px;">' +
+                '<input type="number" class="input score-input" name="q' + i + '_score" value="' + escHtml(scoreValue) + '" step="0.25" min="0" max="100" style="max-width: 180px;">' +
                 '<p class="hint">می‌توانید اعداد اعشاری مثل ۰.۵ یا ۱.۵ وارد کنید. پیش‌فرض: ۱</p>' +
             '</div>';
 

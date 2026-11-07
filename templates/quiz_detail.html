@@ -64,7 +64,7 @@
 
                 {% if q.image_path %}
                 <div class="question-image-wrapper">
-                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image" loading="lazy" decoding="async">
                 </div>
                 {% endif %}
 
@@ -105,13 +105,25 @@
 <script>
     document.getElementById('copy-btn').addEventListener('click', function () {
         var inp = document.getElementById('quiz-link');
-        inp.select();
-        inp.setSelectionRange(0, 99999);
-        try { navigator.clipboard.writeText(inp.value); } catch (e) { }
-        document.execCommand('copy');
-        this.textContent = '✓ کپی شد';
         var btn = this;
-        setTimeout(function () { btn.textContent = 'کپی لینک'; }, 1800);
+        var copied = function () {
+            btn.textContent = '✓ کپی شد';
+            setTimeout(function () { btn.textContent = 'کپی لینک'; }, 1800);
+        };
+        var fallback = function () {
+            inp.focus();
+            inp.select();
+            inp.setSelectionRange(0, 99999);
+            try {
+                if (!document.execCommand('copy')) return;
+            } catch (e) { return; }
+            copied();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(inp.value).then(copied, fallback);
+        } else {
+            fallback();
+        }
     });
 </script>
 {% endblock %}

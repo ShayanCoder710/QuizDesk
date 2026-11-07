@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import jdatetime
 from flask import session, flash, redirect, url_for, abort, current_app
+from sqlalchemy.orm import joinedload
 from extensions import db
 from models.models import Teacher, Quiz, Submission, Question, Answer, WarningLog
 
@@ -25,13 +26,15 @@ def verify_password(password, stored):
     return hmac.compare_digest(candidate, hashed)
 
 def owned_quiz_or_404(token):
-    quiz = Quiz.query.filter_by(token=token).first_or_404()
+    quiz = db.session.query(Quiz).filter(Quiz.token == token).options(
+        joinedload(Quiz.questions), joinedload(Quiz.submissions)
+    ).first_or_404()
     if quiz.teacher_id != session.get('teacher_id'):
         abort(403)
     return quiz
 
 def get_take(token):
-    quiz = Quiz.query.filter_by(token=token).first()
+    quiz = db.session.query(Quiz).filter(Quiz.token == token).options(joinedload(Quiz.questions)).first()
     if not quiz:
         return None, None
     sid = session.get(f'take_{token}')

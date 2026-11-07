@@ -64,7 +64,7 @@
 
                 {% if q.image_path %}
                 <div class="question-image-wrapper">
-                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image">
+                    <img src="{{ url_for('uploaded_file', filename=q.image_path) }}" alt="تصویر سوال" class="question-image" loading="lazy" decoding="async">
                 </div>
                 {% endif %}
 
