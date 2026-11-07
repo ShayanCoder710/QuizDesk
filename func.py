@@ -1,16 +1,15 @@
 import json
 import os
-import random
 import secrets
 import hashlib
 import hmac
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import jdatetime
-from flask import session, flash, redirect, url_for, abort, current_app
+from flask import session, abort, current_app
 from sqlalchemy.orm import joinedload
 from extensions import db
-from models.models import Teacher, Quiz, Submission, Question, Answer, WarningLog
+from models.models import Quiz, Submission, Answer
 
 def hash_password(password):
     salt = secrets.token_hex(16)

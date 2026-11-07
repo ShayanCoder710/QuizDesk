@@ -52,6 +52,15 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = MYSQL_CONFIG
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SEND_FILE_MAX_AGE'] = 300
+
+def send_file_max_age(filename):
+    name = str(filename).lower()
+    if '/uploads/' in name:
+        return 300
+    return 86400
+
+app.get_send_file_max_age = send_file_max_age
 
 db.init_app(app)
 csrf.init_app(app)

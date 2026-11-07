@@ -2442,6 +2442,10 @@ body.light-theme .eggy.bottom-right > div {
 }
 
 @media (max-width: 900px) {
+    .hide-tablet {
+        display: none;
+    }
+
     .topbar {
         width: 94%;
     }
