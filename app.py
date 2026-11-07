@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_from_directory, Response
 from flask_wtf.csrf import CSRFError
+from werkzeug.exceptions import NotFound
 from config import MYSQL_CONFIG, SECRET_KEY
 from extensions import db, csrf
 from models.models import Teacher, Quiz, Submission, Question, WarningLog
@@ -347,9 +348,17 @@ def edit_quiz(token):
     
     quiz = func.owned_quiz_or_404(token)
     
+    now = datetime.now()
+    for s in [x for x in quiz.submissions if not x.submitted_at and (x.started_at + timedelta(minutes=quiz.time_limit)) < now]:
+        func.finalize_submission(s, None)
+    
     finished = [s for s in quiz.submissions if s.submitted_at]
+    active = [s for s in quiz.submissions if not s.submitted_at]
     if finished:
         flash('این آزمون قبلاً توسط دانش‌آموزان ثبت نهایی شده است. برای حفظ یکپارچگی نمرات و پاسخ‌ها، ویرایش سوالات امکان‌پذیر نیست. لطفاً یک آزمون جدید بسازید.', 'err')
+        return redirect(url_for('quiz_detail', token=quiz.token))
+    if active:
+        flash('هنوز دانش‌آموزی آزمون را شروع کرده و ثبت نهایی نکرده است. برای جلوگیری از بهم‌ریختگی نمرات آن دانش‌آموز، تا زمانی که پاسخ‌ها ثبت نشده، ویرایش ممکن نیست.', 'err')
         return redirect(url_for('quiz_detail', token=quiz.token))
     
     if request.method == 'POST':
@@ -692,11 +701,17 @@ def submission_detail(sid):
 
 @app.route('/take/<token>', methods=['GET', 'POST'])
 def take_quiz(token):
-    quiz = db.session.query(Quiz).filter(Quiz.token == token).options(joinedload(Quiz.questions)).first_or_404()
+    try:
+        quiz = db.session.query(Quiz).filter(Quiz.token == token).options(joinedload(Quiz.questions)).first_or_404()
+    except NotFound:
+        return render_template('message.html', icon='🔍', title='آزمون پیدا نشد',
+                               text='لینک آزمون نامعتبر است یا این آزمون حذف شده است.',
+                               back_label='بازگشت به صفحه اصلی', back_url=url_for('index')), 404
 
     if quiz.is_locked:
-        flash('این آزمون در حال حاضر قفل است و امکان شرکت در آن وجود ندارد.', 'err')
-        return abort(403)
+        return render_template('message.html', icon='🔒', title='آزمون قفل است',
+                               text='این آزمون در حال حاضر قفل است و امکان شرکت در آن وجود ندارد.',
+                               back_label='بازگشت به صفحه اصلی', back_url=url_for('index')), 403
 
     key = f'take_{token}'
     sid = session.get(key)

@@ -123,7 +123,11 @@
         var query = this.value.toLowerCase().trim();
         
         quizCards.forEach(function(card) {
-            var text = card.textContent.toLowerCase();
+            var clone = card.cloneNode(true);
+            var actions = clone.querySelector('.quiz-actions');
+            if (actions) actions.remove();
+            
+            var text = clone.textContent.toLowerCase();
             
             if (query === '' || text.indexOf(query) !== -1) {
                 card.style.display = '';
