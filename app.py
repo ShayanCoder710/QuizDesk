@@ -2,14 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_wtf.csrf import CSRFError
 from config import MYSQL_CONFIG, SECRET_KEY
 from extensions import db, csrf
-from models.models import Teacher, Quiz, Submission, Question, Answer, WarningLog
+from models.models import Teacher, Quiz, Submission, Question, WarningLog
 import func
 import secrets, random, json, os
-import jdatetime
 from datetime import datetime, timedelta
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from weasyprint import HTML
 import shutil
 
 app = Flask(__name__)
@@ -101,7 +100,12 @@ def register():
         else:
             teacher = Teacher(name=name, username=username, password_hash=func.hash_password(password))
             db.session.add(teacher)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash('این نام کاربری قبلاً ثبت شده است.', 'err')
+                return render_template('register.html')
             flash('حساب شما با موفقیت ساخته شد.', 'ok')
             return redirect(url_for('login'))
     return render_template('register.html')
@@ -144,7 +148,7 @@ def admin_view_quiz(token):
     if session.get('teacher_username') != ADMIN_USERNAME:
         abort(403)
     
-    quiz = Quiz.query.filter_by(token=token).first_or_404()
+    quiz = db.session.query(Quiz).filter(Quiz.token == token).options(joinedload(Quiz.submissions)).first_or_404()
     done = [s for s in quiz.submissions if s.submitted_at]
     return render_template('admin_quiz_detail.html', quiz=quiz, done_count=len(done))
 
@@ -631,6 +635,7 @@ def quiz_results_pdf(token):
         font_url=font_url
     )
     
+    from weasyprint import HTML
     try:
         pdf_file = HTML(string=html_content).write_pdf()
     except (OSError, ValueError) as e:
@@ -687,7 +692,7 @@ def submission_detail(sid):
 
 @app.route('/take/<token>', methods=['GET', 'POST'])
 def take_quiz(token):
-    quiz = Quiz.query.filter_by(token=token).first_or_404()
+    quiz = db.session.query(Quiz).filter(Quiz.token == token).options(joinedload(Quiz.questions)).first_or_404()
 
     if quiz.is_locked:
         flash('این آزمون در حال حاضر قفل است و امکان شرکت در آن وجود ندارد.', 'err')

@@ -91,7 +91,7 @@ def finalize_submission(sub, form_data):
 FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹'
 
 def fa_filter(value):
-    return ''.join(FA_DIGITS[int(ch)] if ch.isdigit() else ch for ch in str(value))
+    return ''.join(FA_DIGITS[int(ch)] if ch.isdigit() else ('٫' if ch == '.' else ch) for ch in str(value))
 
 PERSIAN_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند']
 def jdate_filter(value):

@@ -123,10 +123,7 @@
         var query = this.value.toLowerCase().trim();
         
         quizCards.forEach(function(card) {
-            var title = card.querySelector('.quiz-title');
-            if (!title) return;
-            
-            var text = title.textContent.toLowerCase();
+            var text = card.textContent.toLowerCase();
             
             if (query === '' || text.indexOf(query) !== -1) {
                 card.style.display = '';
