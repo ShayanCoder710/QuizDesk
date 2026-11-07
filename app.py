@@ -8,7 +8,7 @@ import func
 import secrets, random, json, os
 from datetime import datetime, timedelta
 from sqlalchemy import or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DatabaseError
 from sqlalchemy.orm import joinedload
 import shutil
 
@@ -28,7 +28,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def image_size(file_storage):
-    """Return the byte size of an uploaded file, rewinding the stream afterwards."""
     try:
         if not file_storage or not file_storage.stream:
             return 0
@@ -359,7 +358,9 @@ def edit_quiz(token):
     
     now = datetime.now()
     for s in [x for x in quiz.submissions if not x.submitted_at and (x.started_at + timedelta(minutes=quiz.time_limit)) < now]:
-        func.finalize_submission(s, None)
+        locked = lock_submission(s.id)
+        if locked is not None and not locked.submitted_at:
+            func.finalize_submission(locked, None)
     
     finished = [s for s in quiz.submissions if s.submitted_at]
     active = [s for s in quiz.submissions if not s.submitted_at]
@@ -757,6 +758,21 @@ def take_quiz(token):
     return render_template('student_enter.html', quiz=quiz)
 
 
+def lock_submission(sid):
+    last_err = None
+    for _ in range(3):
+        try:
+            return db.session.execute(
+                db.select(Submission).where(Submission.id == sid).with_for_update()
+            ).scalar_one_or_none()
+        except DatabaseError as e:
+            last_err = e
+            db.session.rollback()
+    if last_err:
+        raise last_err
+    return None
+
+
 @app.route('/take/<token>/exam')
 def take_exam(token):
     quiz, sub = func.get_take(token)
@@ -770,7 +786,9 @@ def take_exam(token):
     elapsed = (datetime.now() - sub.started_at).total_seconds()
     remaining = int(quiz.time_limit * 60 - elapsed)
     if remaining <= 0:
-        func.finalize_submission(sub, None)
+        locked = lock_submission(sub.id)
+        if locked is not None and not locked.submitted_at:
+            func.finalize_submission(locked, None)
         flash('زمان آزمون به پایان رسید.', 'err')
         return redirect(url_for('take_result', token=token))
     qids = func.order_of(sub)
@@ -782,14 +800,25 @@ def take_exam(token):
 
 @app.route('/take/<token>/submit', methods=['POST'])
 def take_submit(token):
-    quiz, sub = func.get_take(token)
-    if not quiz or not sub or sub.submitted_at:
+    key = f'take_{token}'
+    sid = session.get(key)
+    locked = lock_submission(sid) if sid else None
+    if locked is None:
+        if sid:
+            db.session.rollback()
         return redirect(url_for('take_quiz', token=token))
-    locked = db.session.execute(
-        db.select(Submission).where(Submission.id == sub.id).with_for_update()
-    ).scalar_one_or_none()
-    if locked is None or locked.submitted_at:
+    if locked.submitted_at:
         db.session.rollback()
+        return redirect(url_for('take_result', token=token))
+    quiz = db.session.get(Quiz, locked.quiz_id)
+    if not quiz:
+        db.session.rollback()
+        return redirect(url_for('take_quiz', token=token))
+    deadline = locked.started_at + timedelta(minutes=quiz.time_limit)
+    if datetime.now() > deadline + timedelta(seconds=60):
+        db.session.rollback()
+        func.finalize_submission(locked, None)
+        flash('زمان آزمون به پایان رسید.', 'err')
         return redirect(url_for('take_result', token=token))
     func.finalize_submission(locked, request.form)
     return redirect(url_for('take_result', token=token))
