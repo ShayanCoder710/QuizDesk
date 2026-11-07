@@ -48,6 +48,7 @@ class Submission(db.Model):
     warnings = db.Column(db.Integer, default=0)
     answers = db.relationship('Answer', backref='submission', lazy=True, cascade='all, delete-orphan')
     warning_logs = db.relationship('WarningLog', backref='submission', lazy=True, cascade='all, delete-orphan')
+    __table_args__ = (db.Index('ix_submission_quiz_submitted', 'quiz_id', 'submitted_at'),)
 
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)

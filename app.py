@@ -986,6 +986,16 @@ def err413(e):
 
 with app.app_context():
     db.create_all()
+    try:
+        now = datetime.now()
+        for sub in Submission.query.filter(Submission.submitted_at.is_(None)).all():
+            quiz = db.session.get(Quiz, sub.quiz_id)
+            if quiz and (sub.started_at + timedelta(minutes=quiz.time_limit)) < now:
+                locked = lock_submission(sub.id)
+                if locked is not None and not locked.submitted_at:
+                    func.finalize_submission(locked, None)
+    except Exception:
+        db.session.rollback()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
